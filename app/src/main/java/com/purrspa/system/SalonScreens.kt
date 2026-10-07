@@ -284,6 +284,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Text("Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}")
                     if (cat.notes.isNotBlank()) Text("Handling notes: ${cat.notes}")
                     Text("${history.size} recorded visits", style = MaterialTheme.typography.titleMedium)
+                    val completed = history.filter { it.status == "COMPLETED" }
+                    Text("${completed.size} completed • Service value: £${"%.2f".format(Locale.UK, completed.sumOf { it.pricePence } / 100.0)}")
                     if (history.isEmpty()) Text("No visits recorded for this cat.")
                     history.forEach { visit ->
                         HorizontalDivider()
