@@ -56,6 +56,6 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun setVisitStatus(visit: Visit, status: String) {
         val allowed = mapOf("SCHEDULED" to setOf("IN_PROGRESS", "CANCELLED", "NO_SHOW"), "IN_PROGRESS" to setOf("COMPLETED", "CANCELLED"))
         if (status !in allowed[visit.status].orEmpty()) return
-        viewModelScope.launch { db.visits().update(visit.copy(status = status)) }
+        viewModelScope.launch { db.visits().transitionStatus(visit.id, visit.status, status) }
     }
 }
