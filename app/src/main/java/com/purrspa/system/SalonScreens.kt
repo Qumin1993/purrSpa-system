@@ -247,7 +247,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     var service by rememberSaveable { mutableStateOf("Full groom") }; var location by rememberSaveable { mutableStateOf("Salon") }
     var date by rememberSaveable { mutableStateOf(SimpleDateFormat("yyyy-MM-dd",Locale.UK).format(Date())) }
     var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
-    val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).atZone(ZoneId.of("Europe/London")).toInstant().toEpochMilli() }.getOrNull() }
+    val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
         Column {
@@ -255,6 +255,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) { cats.forEach { c -> DropdownMenuItem(text={Text(c.name)},onClick={catId=c.id;expanded=false}) } }
             }
             Field(date,{date=it},"Date YYYY-MM-DD"); Field(time,{time=it},"Time HH:mm")
+            if (parsed == null) Text("Enter a valid UK date and time. Clock-change times may be unavailable or ambiguous.", color = MaterialTheme.colorScheme.error)
             Field(service,{service=it},"Service"); Field(location,{location=it},"Salon or mobile"); Field(price,{price=it},"Price GBP")
         }
     },confirmButton={TextButton(enabled=parsed!=null && pence!=null && pence>=0 && service.isNotBlank(),onClick={onSave(catId,parsed!!,service,location,pence!!)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
