@@ -69,7 +69,16 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 val matchingClients = clients.filter { clientSearch.isBlank() || it.name.contains(clientSearch, ignoreCase = true) || it.phone.contains(clientSearch, ignoreCase = true) || it.email.contains(clientSearch, ignoreCase = true) }
                 Text("Showing ${matchingClients.size} of ${clients.size} clients", color = MaterialTheme.colorScheme.secondary)
                 if (matchingClients.isEmpty()) Text("No clients match your search.")
-                matchingClients.forEach { client -> Row { Text(client.name, Modifier.weight(1f)); TextButton(onClick = { editingClient = client }) { Text("Edit") } } }
+                matchingClients.forEach { client ->
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(client.name, style = MaterialTheme.typography.titleMedium)
+                            if (client.phone.isNotBlank()) Text(client.phone, color = MaterialTheme.colorScheme.secondary)
+                            Text("${cats.count { it.clientId == client.id }} cats", color = MaterialTheme.colorScheme.secondary)
+                        }
+                        TextButton(onClick = { editingClient = client }) { Text("Edit") }
+                    }
+                }
             }
             "Cats" -> {
                 Button(onClick = { showAdd = true }, enabled = clients.isNotEmpty()) { Text("Add cat") }
