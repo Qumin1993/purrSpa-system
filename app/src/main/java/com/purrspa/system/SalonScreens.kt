@@ -45,6 +45,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var catSearch by rememberSaveable { mutableStateOf("") }
     var visitSearch by rememberSaveable { mutableStateOf("") }
     var visitStatusFilter by rememberSaveable { mutableStateOf("ALL") }
+    var calendarDay by rememberSaveable { mutableStateOf(java.time.LocalDate.now(ZoneId.of("Europe/London")).toString()) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
         when(page) {
@@ -91,9 +92,18 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         )
                     }
                 }
+                val selectedDay = if (page == "Calendar") runCatching { java.time.LocalDate.parse(calendarDay) }.getOrNull() else null
+                if (page == "Calendar") {
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        OutlinedTextField(value = calendarDay, onValueChange = { calendarDay = it }, label = { Text("Day YYYY-MM-DD") }, singleLine = true, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { calendarDay = java.time.LocalDate.now(ZoneId.of("Europe/London")).toString() }) { Text("Today") }
+                    }
+                    if (selectedDay == null) Text("Enter a valid date.", color = MaterialTheme.colorScheme.error)
+                }
                 val visibleVisits = visits.filter { visit ->
                     val cat = cats.firstOrNull { it.id == visit.catId }
                     val owner = clients.firstOrNull { it.id == cat?.clientId }
+                    (page != "Calendar" || (selectedDay != null && java.time.Instant.ofEpochMilli(visit.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay)) &&
                     (visitStatusFilter == "ALL" || visit.status == visitStatusFilter) &&
                         (visitSearch.isBlank() ||
                             visit.service.contains(visitSearch, ignoreCase = true) ||
