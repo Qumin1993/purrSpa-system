@@ -15,6 +15,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import com.purrspa.system.reports.VisitPdf
@@ -44,7 +46,11 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         when(page) {
             "Home" -> {
                 Text("Clients: ${clients.size}    Cats: ${cats.size}    Visits: ${visits.size}")
-                Text("Upcoming appointments", style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Image(painter = painterResource(R.drawable.purr_cat_charcoal), contentDescription = "Illustrated charcoal cat", modifier = Modifier.size(72.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Upcoming appointments", style = MaterialTheme.typography.titleLarge)
+                }
                 visits.filter { it.startMillis >= System.currentTimeMillis() && it.status == "SCHEDULED" }.sortedBy { it.startMillis }.take(8).forEach {
                     Text("${cats.firstOrNull { c -> c.id == it.catId }?.name ?: "Unknown cat"} • ${it.service} • ${dateTime(it.startMillis)}")
                 }
