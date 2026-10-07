@@ -5,6 +5,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.purrspa.system.data.*
@@ -14,9 +19,9 @@ import java.util.Locale
 
 @Composable
 fun SalonScreen(page: String, vm: SalonViewModel) {
-    val clients by vm.clients.collectAsState()
-    val cats by vm.cats.collectAsState()
-    val visits by vm.visits.collectAsState()
+    val clients by vm.clients.collectAsStateWithLifecycle()
+    val cats by vm.cats.collectAsStateWithLifecycle()
+    val visits by vm.visits.collectAsStateWithLifecycle()
     var showAdd by remember(page) { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
@@ -97,7 +102,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     var service by remember { mutableStateOf("Full groom") }; var location by remember { mutableStateOf("Salon") }
     var date by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd",Locale.UK).format(Date())) }
     var time by remember { mutableStateOf("10:30") }; var price by remember { mutableStateOf("45.00") }
-    val parsed = remember(date,time) { runCatching { SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.UK).apply { isLenient=false }.parse("$date $time")?.time }.getOrNull() }
+    val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).atZone(ZoneId.of("Europe/London")).toInstant().toEpochMilli() }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
         Column {
