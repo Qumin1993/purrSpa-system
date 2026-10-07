@@ -51,7 +51,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
     }
     fun saveVisitNotes(visit: Visit, notes: String) {
-        viewModelScope.launch { db.visits().update(visit.copy(notes = notes.trim())) }
+        viewModelScope.launch { db.visits().updateNotes(visit.id, notes.trim()) }
     }
     fun setVisitStatus(visit: Visit, status: String) {
         val allowed = mapOf("SCHEDULED" to setOf("IN_PROGRESS", "CANCELLED", "NO_SHOW"), "IN_PROGRESS" to setOf("COMPLETED", "CANCELLED"))
