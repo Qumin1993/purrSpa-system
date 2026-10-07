@@ -1,6 +1,7 @@
 package com.purrspa.system
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -22,8 +23,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val clients by vm.clients.collectAsStateWithLifecycle()
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
+    val assessments by vm.assessments.collectAsStateWithLifecycle()
     var showAdd by remember(page) { mutableStateOf(false) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
+    var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
         when(page) {
@@ -52,6 +55,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             if (visit.notes.isNotBlank()) Text("Notes: ${visit.notes}")
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
+                                TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
                                 if (visit.status == "SCHEDULED") {
                                     TextButton(onClick = { vm.setVisitStatus(visit, "IN_PROGRESS") }) { Text("Start") }
                                     TextButton(onClick = { vm.setVisitStatus(visit, "CANCELLED") }) { Text("Cancel") }
@@ -78,6 +82,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             else -> Text("Planned module. No live functionality yet.")
         }
+    }
+    assessingVisit?.let { visit ->
+        GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = java.util.UUID.randomUUID().toString(), visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null })
     }
     editingVisit?.let { visit ->
         VisitNotesDialog(visit.notes, onClose = { editingVisit = null }, onSave = { notes -> vm.saveVisitNotes(visit, notes); editingVisit = null })
@@ -141,4 +148,47 @@ private fun VisitNotesDialog(initial: String, onClose: () -> Unit, onSave: (Stri
     AlertDialog(onDismissRequest = onClose, title = { Text("Grooming notes") }, text = {
         OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Observations and handling notes") }, minLines = 4, modifier = Modifier.fillMaxWidth())
     }, confirmButton = { TextButton(onClick = { onSave(notes) }) { Text("Save") } }, dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
+}
+
+@Composable
+private fun GroomingAssessmentDialog(
+    original: GroomingAssessment,
+    onClose: () -> Unit,
+    onSave: (GroomingAssessment) -> Unit
+) {
+    var draft by remember(original.id) { mutableStateOf(original) }
+    val tasks = listOf("Brushing", "Bathing", "Dryer", "Nail trim", "Paw handling", "Belly", "Tail")
+    val scores = listOf(draft.brushing, draft.bathing, draft.drying, draft.nailTrim, draft.paws, draft.belly, draft.tail)
+    fun setScore(index: Int, score: Int) {
+        draft = when (index) {
+            0 -> draft.copy(brushing = score)
+            1 -> draft.copy(bathing = score)
+            2 -> draft.copy(drying = score)
+            3 -> draft.copy(nailTrim = score)
+            4 -> draft.copy(paws = score)
+            5 -> draft.copy(belly = score)
+            else -> draft.copy(tail = score)
+        }
+    }
+    AlertDialog(onDismissRequest = onClose, title = { Text("Groomer assessment") }, text = {
+        Column(Modifier.heightIn(max = 510.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Rate only observed activities. Not assessed is the default.")
+            tasks.forEachIndexed { index, label ->
+                Text(label, style = MaterialTheme.typography.labelLarge)
+                var expanded by remember { mutableStateOf(false) }
+                val options = listOf("Not assessed", "Very calm", "Calm", "Okay", "Nervous", "Stressed")
+                Box {
+                    OutlinedButton(onClick = { expanded = true }) { Text(options[scores[index] + 1]) }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        options.forEachIndexed { optionIndex, option ->
+                            DropdownMenuItem(text = { Text(option) }, onClick = { setScore(index, optionIndex - 1); expanded = false })
+                        }
+                    }
+                }
+            }
+            OutlinedTextField(draft.coatCondition, { draft = draft.copy(coatCondition = it) }, label = { Text("Coat and skin observations") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(draft.recommendations, { draft = draft.copy(recommendations = it) }, label = { Text("Home care recommendations") }, modifier = Modifier.fillMaxWidth())
+        }
+    }, confirmButton = { TextButton(onClick = { onSave(draft) }) { Text("Save assessment") } },
+        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
 }
