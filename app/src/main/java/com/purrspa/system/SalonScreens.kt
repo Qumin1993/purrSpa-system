@@ -113,7 +113,14 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             visit.service.contains(visitSearch, ignoreCase = true) ||
                             cat?.name?.contains(visitSearch, ignoreCase = true) == true ||
                             owner?.name?.contains(visitSearch, ignoreCase = true) == true)
-                }.sortedByDescending { it.startMillis }
+                }.let { filtered ->
+                    if (page == "Calendar") filtered.sortedBy { it.startMillis }
+                    else filtered.sortedByDescending { it.startMillis }
+                }
+                if (page == "Calendar" && selectedDay != null) {
+                    val activeCount = visibleVisits.count { it.status != "CANCELLED" && it.status != "NO_SHOW" }
+                    Text("${selectedDay.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale.UK))} • $activeCount active appointments", style = MaterialTheme.typography.titleMedium)
+                }
                 Text("Showing ${visibleVisits.size} of ${visits.size} visits", color = MaterialTheme.colorScheme.secondary)
                 if (visibleVisits.isEmpty()) Text("No visits match these filters.")
                 visibleVisits.forEach { visit ->
