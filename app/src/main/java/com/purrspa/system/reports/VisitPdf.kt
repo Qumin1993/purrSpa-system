@@ -54,21 +54,7 @@ object VisitPdf {
                 lines += listOf("", "COAT / SKIN", assessment.coatCondition.ifBlank { "Not recorded" },
                     "", "HOME CARE", assessment.recommendations.ifBlank { "Not recorded" })
             }
-            val wrappedLines = lines.flatMap { line ->
-                if (line.isBlank()) listOf("") else {
-                    val result = mutableListOf<String>()
-                    var current = ""
-                    for (character in line.replace("\\r", "").replace("\\n", " ")) {
-                        if (current.isNotEmpty() && body.measureText(current + character) > 500f) {
-                            result.add(current)
-                            current = ""
-                        }
-                        current += character
-                    }
-                    if (current.isNotEmpty()) result.add(current)
-                    result
-                }
-            }
+            val wrappedLines = lines.flatMap { PdfTextLayout.wrap(it, body, 500f) }
             var index = 0
             var pageNumber = 0
             do {
