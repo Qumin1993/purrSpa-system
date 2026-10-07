@@ -8,8 +8,6 @@ import android.graphics.pdf.PdfDocument
 import androidx.core.content.FileProvider
 import com.purrspa.system.data.*
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 /** Single visit report, shared only through Android's chooser. */
@@ -60,7 +58,7 @@ object VisitPdf {
                 if (line.isBlank()) listOf("") else {
                     val result = mutableListOf<String>()
                     var current = ""
-                    for (character in line) {
+                    for (character in line.replace("\\r", "").replace("\\n", " ")) {
                         if (current.isNotEmpty() && body.measureText(current + character) > 500f) {
                             result.add(current)
                             current = ""
@@ -85,7 +83,7 @@ object VisitPdf {
                     if (line.isNotEmpty()) canvas.drawText(line, 44f, y, body)
                     y += if (line.isEmpty()) 10f else 19f
                 }
-                canvas.drawText("Purr Spa  |  Coleraine  |  Page $pageNumber", 44f, 815f, accent)
+                canvas.drawText("Purr Spa  |  Page $pageNumber", 44f, 815f, accent)
                 document.finishPage(page)
             } while (index < wrappedLines.size)
             val temp = File(dir, "${output.name}.tmp")
