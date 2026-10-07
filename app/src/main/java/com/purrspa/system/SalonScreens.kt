@@ -44,6 +44,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var clientSearch by rememberSaveable { mutableStateOf("") }
     var catSearch by rememberSaveable { mutableStateOf("") }
     var visitSearch by rememberSaveable { mutableStateOf("") }
+    var visitStatusFilter by rememberSaveable { mutableStateOf("ALL") }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
         when(page) {
