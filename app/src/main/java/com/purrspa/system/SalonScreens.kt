@@ -77,7 +77,15 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 val matchingCats = cats.filter { catSearch.isBlank() || it.name.contains(catSearch, ignoreCase = true) || it.breed.contains(catSearch, ignoreCase = true) || clients.firstOrNull { owner -> owner.id == it.clientId }?.name?.contains(catSearch, ignoreCase = true) == true }
                 Text("Showing ${matchingCats.size} of ${cats.size} cats", color = MaterialTheme.colorScheme.secondary)
                 if (matchingCats.isEmpty()) Text("No cats match your search.")
-                matchingCats.forEach { cat -> Row { Text(cat.name, Modifier.weight(1f)); TextButton(onClick = { editingCat = cat }) { Text("Edit") } } }
+                matchingCats.forEach { cat ->
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(cat.name, style = MaterialTheme.typography.titleMedium)
+                            Text("${cat.breed.ifBlank { "Breed not specified" }} • Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}", color = MaterialTheme.colorScheme.secondary)
+                        }
+                        TextButton(onClick = { editingCat = cat }) { Text("Edit") }
+                    }
+                }
             }
             "Visits", "Calendar" -> {
                 Button(onClick = { showAdd = true }, enabled = cats.isNotEmpty()) { Text("New visit") }
