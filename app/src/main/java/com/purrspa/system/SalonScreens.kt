@@ -36,6 +36,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val assessments by vm.assessments.collectAsStateWithLifecycle()
     var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
+    var clientHistory by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
@@ -77,6 +78,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             if (client.phone.isNotBlank()) Text(client.phone, color = MaterialTheme.colorScheme.secondary)
                             Text("${cats.count { it.clientId == client.id }} cats", color = MaterialTheme.colorScheme.secondary)
                         }
+                        TextButton(onClick = { clientHistory = client }) { Text("History") }
                         TextButton(onClick = { editingClient = client }) { Text("Edit") }
                     }
                 }
@@ -270,6 +272,30 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     }
     editingClient?.let { item ->
         EditClientDialog(item, onClose = { editingClient = null }, onSave = { vm.updateClient(it); editingClient = null })
+    }
+    clientHistory?.let { client ->
+        val ownedCats = cats.filter { it.clientId == client.id }
+        val catNames = ownedCats.associateBy { it.id }
+        val history = visits.filter { it.catId in catNames }.sortedByDescending { it.startMillis }
+        val completed = history.filter { it.status == "COMPLETED" }
+        AlertDialog(
+            onDismissRequest = { clientHistory = null },
+            title = { Text("${client.name} • Client history") },
+            text = {
+                Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${ownedCats.size} cats • ${history.size} visits")
+                    Text("${completed.size} completed • Service value: £${"%.2f".format(Locale.UK, completed.sumOf { it.pricePence } / 100.0)}")
+                    if (history.isEmpty()) Text("No visits recorded for this client.")
+                    history.forEach { visit ->
+                        HorizontalDivider()
+                        Text("${catNames[visit.catId]?.name ?: "Unknown cat"} • ${dateTime(visit.startMillis)}", style = MaterialTheme.typography.titleSmall)
+                        Text("${visit.service} • ${visit.status}")
+                        Text("£${"%.2f".format(Locale.UK, visit.pricePence / 100.0)}")
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { clientHistory = null }) { Text("Close") } }
+        )
     }
     editingCat?.let { item ->
         EditCatDialog(item, onClose = { editingCat = null }, onSave = { vm.updateCat(it); editingCat = null })
