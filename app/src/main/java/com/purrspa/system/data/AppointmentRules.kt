@@ -20,6 +20,12 @@ object AppointmentRules {
         return firstStart < secondEnd && secondStart < firstEnd
     }
 
+    /** A booking must start in the future and fit into the supported timestamp range. */
+    fun validNewStart(startMillis: Long, nowMillis: Long): Boolean =
+        startMillis >= nowMillis && runCatching {
+            Math.addExact(startMillis, DEFAULT_DURATION_MINUTES * MINUTE_MILLIS)
+        }.isSuccess
+
     fun conflicts(startMillis: Long, existing: List<Visit>): Boolean =
         existing.any { visit ->
             visit.status != "CANCELLED" &&
