@@ -23,13 +23,17 @@ internal object PdfTextLayout {
                             result.add(line)
                             line = ""
                         }
-                        for (char in word) {
-                            val next = line + char
-                            if (line.isNotEmpty() && paint.measureText(next) > maxWidth) {
-                                result.add(line)
-                                line = ""
+                        if (paint.measureText(word) <= maxWidth) {
+                            line = word
+                        } else {
+                            for (char in word) {
+                                val next = line + char
+                                if (line.isNotEmpty() && paint.measureText(next) > maxWidth) {
+                                    result.add(line)
+                                    line = ""
+                                }
+                                line += char
                             }
-                            line += char
                         }
                     }
                 }
