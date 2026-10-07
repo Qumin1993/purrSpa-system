@@ -23,6 +23,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
     var showAdd by remember(page) { mutableStateOf(false) }
+    var editingVisit by remember { mutableStateOf<Visit?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
         when(page) {
@@ -48,7 +49,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
                             Text("${dateTime(visit.startMillis)} • ${visit.location} • £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)} • ${visit.status}")
+                            if (visit.notes.isNotBlank()) Text("Notes: ${visit.notes}")
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 if (visit.status == "SCHEDULED") {
                                     TextButton(onClick = { vm.setVisitStatus(visit, "IN_PROGRESS") }) { Text("Start") }
                                     TextButton(onClick = { vm.setVisitStatus(visit, "CANCELLED") }) { Text("Cancel") }
@@ -60,8 +63,24 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     }
                 }
             }
+            "Services" -> {
+                Text("Current guide prices (GBP)", style = MaterialTheme.typography.titleLarge)
+                listOf("Full groom with bath · Short hair" to "from £40", "Full groom with bath · Long hair / Maine Coon" to "from £45", "Water-free full groom" to "from £40", "De-shedding" to "£30", "Dematting" to "from £30", "Nail trim" to "£6", "Flea surcharge" to "+£5", "Mobile travel" to "Quoted separately").forEach { (name, price) ->
+                    Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text(name, Modifier.weight(1f)); Text(price) } }
+                }
+                Text("Reference prices only. Booking price is saved independently.", color = MaterialTheme.colorScheme.secondary)
+            }
+            "Notes" -> {
+                Text("Visit notes", style = MaterialTheme.typography.titleLarge)
+                visits.filter { it.notes.isNotBlank() }.forEach { visit ->
+                    Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) { Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown cat"} · ${dateTime(visit.startMillis)}"); Text(visit.notes); TextButton(onClick={editingVisit=visit}){Text("Edit")} } }
+                }
+            }
             else -> Text("Planned module. No live functionality yet.")
         }
+    }
+    editingVisit?.let { visit ->
+        VisitNotesDialog(visit.notes, onClose = { editingVisit = null }, onSave = { notes -> vm.saveVisitNotes(visit, notes); editingVisit = null })
     }
     if (showAdd) when(page) {
         "Clients" -> AddClientDialog(onClose = { showAdd = false }, onSave = { n,p,e,a -> vm.addClient(n,p,e,a); showAdd = false })
@@ -115,3 +134,11 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     },confirmButton={TextButton(enabled=parsed!=null && pence!=null && pence>=0 && service.isNotBlank(),onClick={onSave(catId,parsed!!,service,location,pence!!)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 private fun java.math.BigDecimal.toLongExactOrNull(): Long? = runCatching { longValueExact() }.getOrNull()
+
+@Composable
+private fun VisitNotesDialog(initial: String, onClose: () -> Unit, onSave: (String) -> Unit) {
+    var notes by remember(initial) { mutableStateOf(initial) }
+    AlertDialog(onDismissRequest = onClose, title = { Text("Grooming notes") }, text = {
+        OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Observations and handling notes") }, minLines = 4, modifier = Modifier.fillMaxWidth())
+    }, confirmButton = { TextButton(onClick = { onSave(notes) }) { Text("Save") } }, dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
+}
