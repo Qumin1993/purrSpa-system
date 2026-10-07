@@ -137,6 +137,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         onCheckedChange = { includePrivateNotes = it },
                         modifier = Modifier.padding(4.dp)
                     )
+                    Text("Include private groomer visit notes")
                     Text("Confirm the recipient before sending.")
                 }
             },
