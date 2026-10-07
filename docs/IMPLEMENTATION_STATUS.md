@@ -3,8 +3,8 @@
 ## Implemented in repository (source code, unverified build)
 - Android Compose tablet navigation shell and Purr Spa color palette.
 - Room v1 clients, cats, visits with foreign keys and reactive Flow queries.
-- Client and cat creation, editing dialogs and listing, with client search (name/phone/email) and cat search (name/breed/owner).
-- Appointment list filtering by cat name, owner, service and visit status and appointment creation with GBP integer-pence storage, strict local date parsing, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
+- Client and cat creation, editing dialogs and listing, with client search (name/phone/email) and cat search (name/breed/owner), result counts and empty states.
+- Appointment list filtering by cat name, owner, service and visit status with result counts and empty states and appointment creation with GBP integer-pence storage, strict local date parsing, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
 - Booking conflict message reset on new attempts. Visit transitions SCHEDULED -> IN_PROGRESS -> COMPLETED, cancellation and no-show, with compare-and-set SQL updates to avoid stale-state overwrites.
 - Persisted visit notes with edit dialog and notes index.
 - Room v2 per-visit grooming assessment, seven behavior ratings (-1 not assessed), coat observations and recommendations, with explicit v1->v2 migration.
@@ -19,7 +19,7 @@
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
 3. Room v2 remains a prototype schema: single cat per appointment, no travel/deposit model, no owner consent/health history; grooming assessment exists but requires migration and persistence tests. Must design proper migration before real use.
 4. Forms (including grooming assessment) are not durably autosaved. Creation form fields use rememberSaveable for configuration changes only; this does not replace crash recovery. Do not enter real client data until draft recovery, backup, data protection and migration tests are in place.
-5. PDF text now paginates, private visit notes are opt-in and each share uses a unique temporary filename, but layout, preview and immutable versioning are untested; photo capture, encrypted backup/restore, reminder scheduling and additional branding assets remain incomplete.
+5. PDF text now paginates, private visit notes are opt-in and each share uses a unique temporary filename and the PDF cache prunes older files beyond 12, but layout, preview and immutable versioning are untested; photo capture, encrypted backup/restore, reminder scheduling and additional branding assets remain incomplete.
 6. Need proper ViewModel error surfaces, input validation, configurable visit duration, accessibility, adaptive layouts and tests. Booking conflicts are transactionally checked but currently assume 120-minute visits.
 7. UI navigation currently uses manual page selection, not Navigation Compose.
 8. Static service prices are illustrative; final pricing and service catalog should be configurable.
