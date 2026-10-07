@@ -82,7 +82,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         )
                     }
                 }
-                visits.filter { visit ->
+                val visibleVisits = visits.filter { visit ->
                     val cat = cats.firstOrNull { it.id == visit.catId }
                     val owner = clients.firstOrNull { it.id == cat?.clientId }
                     (visitStatusFilter == "ALL" || visit.status == visitStatusFilter) &&
@@ -90,7 +90,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             visit.service.contains(visitSearch, ignoreCase = true) ||
                             cat?.name?.contains(visitSearch, ignoreCase = true) == true ||
                             owner?.name?.contains(visitSearch, ignoreCase = true) == true)
-                }.sortedByDescending { it.startMillis }.forEach { visit ->
+                }.sortedByDescending { it.startMillis }
+                Text("Showing ${visibleVisits.size} of ${visits.size} visits", color = MaterialTheme.colorScheme.secondary)
+                if (visibleVisits.isEmpty()) Text("No visits match these filters.")
+                visibleVisits.forEach { visit ->
                     Card {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
