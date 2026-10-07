@@ -35,6 +35,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
+    var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
@@ -69,8 +70,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
                                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
                                     if (reportCat != null && reportOwner != null) {
-                                        runCatching { VisitPdf.share(context, visit, reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
-                                            .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
+                                        reportToShare = visit
                                     }
                                 }) { Text("Share PDF") }
                                 if (visit.status == "SCHEDULED") {
@@ -107,6 +107,25 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             else -> Text("Planned module. No live functionality yet.")
         }
+    }
+    reportToShare?.let { visit ->
+        val reportCat = cats.firstOrNull { it.id == visit.catId }
+        val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
+        AlertDialog(
+            onDismissRequest = { reportToShare = null },
+            title = { Text("Share grooming report?") },
+            text = { Text("The PDF includes the owner's name, cat details, visit notes, handling scores and recommendations. Review the information and confirm the recipient before sending.") },
+            confirmButton = {
+                TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
+                    reportToShare = null
+                    if (reportCat != null && reportOwner != null) {
+                        runCatching { VisitPdf.share(context, visit, reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
+                            .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
+                    }
+                }) { Text("Continue to share") }
+            },
+            dismissButton = { TextButton(onClick = { reportToShare = null }) { Text("Cancel") } }
+        )
     }
     editingClient?.let { item ->
         EditClientDialog(item, onClose = { editingClient = null }, onSave = { vm.updateClient(it); editingClient = null })
