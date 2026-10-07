@@ -169,6 +169,17 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     }
                     Text("${selectedDay.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale.UK))} • $activeCount active appointments", style = MaterialTheme.typography.titleMedium)
                 }
+                if (page == "Calendar" && selectedDay != null) {
+                    val dayBookings = visits.filter {
+                        java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay
+                    }
+                    val completedCount = dayBookings.count { it.status == "COMPLETED" }
+                    val cancelledCount = dayBookings.count { it.status == "CANCELLED" }
+                    val noShowCount = dayBookings.count { it.status == "NO_SHOW" }
+                    val bookedPence = dayBookings.filter { it.status !in setOf("CANCELLED", "NO_SHOW") }.sumOf { it.pricePence }
+                    Text("Completed: $completedCount • Cancelled: $cancelledCount • No-show: $noShowCount")
+                    Text("Active service value: £${"%.2f".format(Locale.UK, bookedPence / 100.0)}", color = MaterialTheme.colorScheme.secondary)
+                }
                 val scopedTotal = if (page == "Calendar" && selectedDay != null) visits.count { java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay } else visits.size
                 Text("Showing ${visibleVisits.size} of $scopedTotal visits", color = MaterialTheme.colorScheme.secondary)
                 if (visibleVisits.isEmpty()) Text("No visits match these filters.")
