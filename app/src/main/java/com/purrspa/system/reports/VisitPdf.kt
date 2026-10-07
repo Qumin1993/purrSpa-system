@@ -60,7 +60,15 @@ object VisitPdf {
                 lines += listOf("", "COAT / SKIN", assessment.coatCondition.ifBlank { "Not recorded" },
                     "", "HOME CARE", assessment.recommendations.ifBlank { "Not recorded" })
             }
-            for (line in lines) {
+            val wrappedLines = lines.flatMap { line ->
+                if (line.isBlank()) listOf("") else line.split(Regex("\\s+")).fold(mutableListOf<String>()) { acc, word ->
+                    val last = acc.lastOrNull()
+                    if (last != null && body.measureText("$last $word") <= 500f) acc[acc.lastIndex] = "$last $word"
+                    else acc.add(word)
+                    acc
+                }
+            }
+            for (line in wrappedLines) {
                 val words = line.split(" ")
                 var current = ""
                 for (word in words) {
