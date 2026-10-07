@@ -26,7 +26,7 @@ object VisitPdf {
 
     fun create(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?): File {
         val dir = File(context.cacheDir, "reports").apply { mkdirs() }
-        val output = File(dir, "purrspa-${visit.id}.pdf")
+        val output = File(dir, "purrspa-${java.util.UUID.randomUUID()}.pdf")
         val document = PdfDocument()
         try {
             val title = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(30, 28, 26); textSize = 25f; isFakeBoldText = true }
