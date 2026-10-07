@@ -12,6 +12,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val assessments = db.assessments().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val visits = db.visits().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun addClient(name: String, phone: String, email: String, address: String) {
         if (name.isBlank()) return
@@ -24,6 +25,10 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
         viewModelScope.launch { db.visits().insert(Visit(UUID.randomUUID().toString(), catId, startMillis, service.trim(), location, pricePence)) }
+    }
+    fun saveAssessment(item: GroomingAssessment) {
+        if (listOf(item.brushing, item.bathing, item.drying, item.nailTrim, item.paws, item.belly, item.tail).any { it !in -1..4 }) return
+        viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
     }
     fun saveVisitNotes(visit: Visit, notes: String) {
         viewModelScope.launch { db.visits().update(visit.copy(notes = notes.trim())) }
