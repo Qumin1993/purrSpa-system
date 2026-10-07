@@ -37,12 +37,15 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
+        _bookingError.value = null
         viewModelScope.launch {
             val inserted = db.insertVisitIfFree(
                 Visit(UUID.randomUUID().toString(), catId, startMillis, service.trim(), location, pricePence)
             )
             if (!inserted) {
                 _bookingError.value = "Appointment overlaps an existing booking (estimated 2 hours)."
+            } else {
+                _bookingError.value = null
             }
         }
     }
