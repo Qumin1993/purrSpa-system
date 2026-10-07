@@ -3,13 +3,13 @@
 ## Implemented in repository (source code, unverified build)
 - Android Compose tablet navigation shell and Purr Spa color palette.
 - Room v1 clients, cats, visits with foreign keys and reactive Flow queries.
-- Client and cat creation dialogs and listing.
-- Appointment creation with GBP integer-pence storage, strict local date parsing, lifecycle-aware observation.
+- Client and cat creation, editing dialogs and listing.
+- Appointment creation with GBP integer-pence storage, strict local date parsing, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
 - Visit transitions SCHEDULED -> IN_PROGRESS -> COMPLETED, cancellation and no-show.
 - Persisted visit notes with edit dialog and notes index.
 - Room v2 per-visit grooming assessment, seven behavior ratings (-1 not assessed), coat observations and recommendations, with explicit v1->v2 migration.
 - Groomer form editor from visit screen; assessment saved to Room (currently only on Save, not autosaved).
-- Initial Android PdfDocument visit report generator and ACTION_SEND chooser with private FileProvider; share action on Visits and completed report index.
+- Android PdfDocument multi-page text report generator and ACTION_SEND chooser with private FileProvider; share action on Visits and completed report index.
 - Static Purr Spa service reference price screen.
 - Dashboard client/cat/visit totals and upcoming appointment list.
 - Product and lifecycle architecture plan at docs/PROJECT_PLAN.md.
@@ -19,8 +19,8 @@
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible.
 3. Room v2 remains a prototype schema: single cat per appointment, no travel/deposit model, no owner consent/health history; grooming assessment exists but requires migration and persistence tests. Must design proper migration before real use.
 4. Forms (including grooming assessment) are not autosaved. Do not enter real client data until draft recovery, backup, data protection and migration tests are in place.
-5. PDF is an initial one-page export only: long content can be truncated, no pagination or versioning; photo capture, encrypted backup/restore, reminder scheduling and real branding assets are not implemented.
-6. Need proper ViewModel error surfaces, input validation, overlap checking, accessibility, adaptive layouts and tests.
+5. PDF text now paginates, but layout, preview and immutable versioning are untested; photo capture, encrypted backup/restore, reminder scheduling and real branding assets are not implemented.
+6. Need proper ViewModel error surfaces, input validation, configurable visit duration, accessibility, adaptive layouts and tests.
 7. UI navigation currently uses manual page selection, not Navigation Compose.
 8. Static service prices are illustrative; final pricing and service catalog should be configurable.
 
