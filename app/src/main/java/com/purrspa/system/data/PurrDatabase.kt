@@ -2,6 +2,7 @@ package com.purrspa.system.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "clients")
