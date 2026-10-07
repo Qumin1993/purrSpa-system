@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.purrspa.system.data.SalonViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +39,7 @@ private val symbols = listOf("⌂", "♙", "♧", "▤", "▦", "✎", "✂", "�
 @Composable
 private fun PurrSpaApp() {
     var page by rememberSaveable { mutableStateOf("Home") }
+    val salon: SalonViewModel = viewModel()
     MaterialTheme(colorScheme = lightColorScheme(primary = Rose, background = Cream, surface = Color.White)) {
         Row(Modifier.fillMaxSize().background(Cream)) {
             Column(
@@ -65,30 +68,7 @@ private fun PurrSpaApp() {
                 Text("Happy Cats\nHappier People ♥", color = Gold, lineHeight = 24.sp)
             }
             Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(28.dp)) {
-                Text(if (page == "Home") "Welcome to Purr Spa" else page, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Ink)
-                Spacer(Modifier.height(8.dp))
-                Text(if (page == "Home") "Your grooming studio at a glance" else "Module implementation planned. No customer data stored yet.", color = Color.Gray)
-                Spacer(Modifier.height(24.dp))
-                if (page == "Home") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        listOf("Today's visits", "Clients", "Cats", "Pending reports").forEach {
-                            Surface(Modifier.weight(1f), shape = RoundedCornerShape(16.dp), color = Color.White, tonalElevation = 2.dp) {
-                                Column(Modifier.padding(20.dp)) {
-                                    Text("0", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Rose)
-                                    Text(it, fontSize = 13.sp, color = Ink)
-                                }
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(24.dp))
-                    Surface(shape = RoundedCornerShape(18.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(24.dp)) {
-                            Text("Today's schedule", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(16.dp))
-                            Text("No appointments yet. Visit management will be added in the next phase.", color = Color.Gray)
-                        }
-                    }
-                }
+                SalonScreen(page, salon)
             }
         }
     }
