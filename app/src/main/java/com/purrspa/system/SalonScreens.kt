@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -156,16 +157,16 @@ private fun Field(value: String, onChange: (String)->Unit, label: String) {
 }
 @Composable
 private fun AddClientDialog(onClose: ()->Unit, onSave: (String,String,String,String)->Unit) {
-    var name by remember { mutableStateOf("") }; var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }; var address by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }; var phone by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }; var address by rememberSaveable { mutableStateOf("") }
     AlertDialog(onDismissRequest = onClose, title = { Text("New client") }, text = {
         Column { Field(name,{name=it},"Name *"); Field(phone,{phone=it},"Phone"); Field(email,{email=it},"Email"); Field(address,{address=it},"Address") }
     }, confirmButton = { TextButton(enabled=name.isNotBlank(),onClick={onSave(name,phone,email,address)}){Text("Save")} }, dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 @Composable
 private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (String,String,String,String)->Unit) {
-    var owner by remember { mutableStateOf(clients.first().id) }; var expanded by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }; var breed by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
+    var owner by rememberSaveable { mutableStateOf(clients.first().id) }; var expanded by remember { mutableStateOf(false) }
+    var name by rememberSaveable { mutableStateOf("") }; var breed by rememberSaveable { mutableStateOf("") }; var notes by rememberSaveable { mutableStateOf("") }
     AlertDialog(onDismissRequest=onClose,title={Text("New cat")},text={
         Column {
             Box { OutlinedButton(onClick={expanded=true}) { Text(clients.firstOrNull { it.id==owner }?.name ?: "Select owner") }
@@ -177,10 +178,10 @@ private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (Stri
 }
 @Composable
 private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,Long,String,String,Long)->Unit) {
-    var catId by remember { mutableStateOf(cats.first().id) }; var expanded by remember { mutableStateOf(false) }
-    var service by remember { mutableStateOf("Full groom") }; var location by remember { mutableStateOf("Salon") }
-    var date by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd",Locale.UK).format(Date())) }
-    var time by remember { mutableStateOf("10:30") }; var price by remember { mutableStateOf("45.00") }
+    var catId by rememberSaveable { mutableStateOf(cats.first().id) }; var expanded by remember { mutableStateOf(false) }
+    var service by rememberSaveable { mutableStateOf("Full groom") }; var location by rememberSaveable { mutableStateOf("Salon") }
+    var date by rememberSaveable { mutableStateOf(SimpleDateFormat("yyyy-MM-dd",Locale.UK).format(Date())) }
+    var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).atZone(ZoneId.of("Europe/London")).toInstant().toEpochMilli() }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
