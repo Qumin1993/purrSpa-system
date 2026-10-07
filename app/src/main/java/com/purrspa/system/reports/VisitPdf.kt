@@ -96,6 +96,10 @@ object VisitPdf {
             }
             pruneCache(dir)
             return output
+        } catch (error: Exception) {
+            output.delete()
+            File(dir, "${output.name}.tmp").delete()
+            throw error
         } finally { document.close() }
     }
 }
