@@ -32,6 +32,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val visits by vm.visits.collectAsStateWithLifecycle()
     val assessments by vm.assessments.collectAsStateWithLifecycle()
     var showAdd by remember(page) { mutableStateOf(false) }
+    var editingClient by remember { mutableStateOf<Client?>(null) }
+    var editingCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -46,11 +48,11 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             "Clients" -> {
                 Button(onClick = { showAdd = true }) { Text("Add client") }
-                clients.forEach { Text("${it.name}  •  ${it.phone}  •  ${it.email}") }
+                clients.forEach { client -> Row { Text(client.name, Modifier.weight(1f)); TextButton(onClick = { editingClient = client }) { Text("Edit") } } }
             }
             "Cats" -> {
                 Button(onClick = { showAdd = true }, enabled = clients.isNotEmpty()) { Text("Add cat") }
-                cats.forEach { Text("${it.name} • ${it.breed} • Owner: ${clients.firstOrNull { c -> c.id == it.clientId }?.name ?: "Unknown"}") }
+                cats.forEach { cat -> Row { Text(cat.name, Modifier.weight(1f)); TextButton(onClick = { editingCat = cat }) { Text("Edit") } } }
             }
             "Visits", "Calendar" -> {
                 Button(onClick = { showAdd = true }, enabled = cats.isNotEmpty()) { Text("New visit") }
@@ -105,6 +107,12 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             else -> Text("Planned module. No live functionality yet.")
         }
+    }
+    editingClient?.let { item ->
+        EditClientDialog(item, onClose = { editingClient = null }, onSave = { vm.updateClient(it); editingClient = null })
+    }
+    editingCat?.let { item ->
+        EditCatDialog(item, onClose = { editingCat = null }, onSave = { vm.updateCat(it); editingCat = null })
     }
     bookingError?.let { message ->
         AlertDialog(onDismissRequest = { vm.clearBookingError() }, title = { Text("Booking conflict") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { vm.clearBookingError() }) { Text("OK") } })
