@@ -34,13 +34,15 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
     val assessments by vm.assessments.collectAsStateWithLifecycle()
-    var showAdd by remember(page) { mutableStateOf(false) }
+    var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
+    var clientSearch by rememberSaveable { mutableStateOf("") }
+    var catSearch by rememberSaveable { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
         when(page) {
@@ -57,11 +59,13 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             "Clients" -> {
                 Button(onClick = { showAdd = true }) { Text("Add client") }
-                clients.forEach { client -> Row { Text(client.name, Modifier.weight(1f)); TextButton(onClick = { editingClient = client }) { Text("Edit") } } }
+                OutlinedTextField(value = clientSearch, onValueChange = { clientSearch = it }, label = { Text("Search clients") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                clients.filter { clientSearch.isBlank() || it.name.contains(clientSearch, ignoreCase = true) || it.phone.contains(clientSearch, ignoreCase = true) || it.email.contains(clientSearch, ignoreCase = true) }.forEach { client -> Row { Text(client.name, Modifier.weight(1f)); TextButton(onClick = { editingClient = client }) { Text("Edit") } } }
             }
             "Cats" -> {
                 Button(onClick = { showAdd = true }, enabled = clients.isNotEmpty()) { Text("Add cat") }
-                cats.forEach { cat -> Row { Text(cat.name, Modifier.weight(1f)); TextButton(onClick = { editingCat = cat }) { Text("Edit") } } }
+                OutlinedTextField(value = catSearch, onValueChange = { catSearch = it }, label = { Text("Search cats") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                cats.filter { catSearch.isBlank() || it.name.contains(catSearch, ignoreCase = true) || it.breed.contains(catSearch, ignoreCase = true) || clients.firstOrNull { owner -> owner.id == it.clientId }?.name?.contains(catSearch, ignoreCase = true) == true }.forEach { cat -> Row { Text(cat.name, Modifier.weight(1f)); TextButton(onClick = { editingCat = cat }) { Text("Edit") } } }
             }
             "Visits", "Calendar" -> {
                 Button(onClick = { showAdd = true }, enabled = cats.isNotEmpty()) { Text("New visit") }
