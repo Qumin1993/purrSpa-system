@@ -43,12 +43,14 @@ interface ClientDao {
     @Query("SELECT * FROM clients ORDER BY name COLLATE NOCASE") fun observe(): Flow<List<Client>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Client)
     @Update suspend fun update(item: Client)
+    @Query("SELECT * FROM clients WHERE id = :id LIMIT 1") suspend fun get(id: String): Client?
 }
 @Dao
 interface CatDao {
     @Query("SELECT * FROM cats ORDER BY name COLLATE NOCASE") fun observe(): Flow<List<Cat>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Cat)
     @Update suspend fun update(item: Cat)
+    @Query("SELECT * FROM cats WHERE id = :id LIMIT 1") suspend fun get(id: String): Cat?
 }
 @Dao
 interface VisitDao {
