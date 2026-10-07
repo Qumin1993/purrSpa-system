@@ -50,6 +50,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         when(page) {
             "Home" -> {
                 Text("Clients: ${clients.size}    Cats: ${cats.size}    Visits: ${visits.size}")
+                val today = java.time.LocalDate.now(ZoneId.of("Europe/London"))
+                val todayVisits = visits.filter { java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == today && it.status !in setOf("CANCELLED", "NO_SHOW") }
+                Text("Today: ${todayVisits.size} appointments", style = MaterialTheme.typography.titleMedium)
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Image(painter = painterResource(R.drawable.purr_cat_charcoal), contentDescription = "Illustrated charcoal cat", modifier = Modifier.size(72.dp))
                     Spacer(Modifier.width(12.dp))
