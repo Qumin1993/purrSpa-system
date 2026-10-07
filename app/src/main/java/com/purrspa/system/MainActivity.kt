@@ -16,6 +16,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.purrspa.system.data.SalonViewModel
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +49,7 @@ private fun PurrSpaApp() {
                 Modifier.width(208.dp).fillMaxHeight().background(Ink).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("♧", color = Gold, fontSize = 35.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+                Image(painter = painterResource(R.drawable.purr_cat_ginger), contentDescription = "Purr Spa illustrated ginger cat", modifier = Modifier.size(88.dp).align(Alignment.CenterHorizontally))
                 Text("Purr Spa", color = Gold, fontSize = 29.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Text("C A T  G R O O M I N G", color = Gold, fontSize = 10.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(Modifier.height(20.dp))
