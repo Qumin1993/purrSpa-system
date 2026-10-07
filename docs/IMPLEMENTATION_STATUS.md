@@ -1,7 +1,7 @@
 # Purr Spa implementation status — 2026-10-07
 
 ## Implemented in repository (source code, unverified build)
-- Android Compose tablet navigation shell and Purr Spa color palette.
+- Android Compose tablet navigation shell with scrollable sidebar for smaller displays and Purr Spa color palette.
 - Room v1 clients, cats, visits with foreign keys and reactive Flow queries.
 - Scrollable client/cat creation and edit dialogs and appointment creation dialog for smaller tablet screens. Client and cat creation, editing dialogs and listing, with client search (name/phone/email) and cat search (name/breed/owner), result counts and empty states.
 - Appointment list filtering by cat name, owner, service and visit status with result counts and empty states and appointment creation with GBP integer-pence storage, strict local date parsing (rejects UK DST gaps/ambiguous times), rejects past bookings, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
@@ -11,7 +11,7 @@
 - Groomer form editor from visit screen; assessment saved to Room (currently only on Save, not autosaved).
 - Android PdfDocument multi-page text report generator with word-aware wrapping and a new unexecuted Robolectric layout test and ACTION_SEND chooser with private FileProvider, UK-local dates, explicit temporary URI grants and a confirmation step before sharing. Reports screen has direct share actions; private visit notes are excluded by default and can be explicitly included.
 - Static Purr Spa service reference price screen.
-- Dashboard client/cat/visit totals and upcoming appointment list, now with an original charcoal cat vector. Sidebar uses an original ginger cat vector. Asset provenance is documented in design/CAT_ASSETS.md.
+- Dashboard client/cat/visit totals, current-day active appointment count (Europe/London) and upcoming appointment list, now with an original charcoal cat vector. Sidebar uses an original ginger cat vector. Asset provenance is documented in design/CAT_ASSETS.md.
 - Product and lifecycle architecture plan at docs/PROJECT_PLAN.md.
 
 ## Known blockers and remaining work
