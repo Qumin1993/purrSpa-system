@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -31,11 +30,11 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
         viewModelScope.launch {
-            val existing = db.visits().observe().first()
-            if (AppointmentRules.conflicts(startMillis, existing)) {
+            val inserted = db.insertVisitIfFree(
+                Visit(UUID.randomUUID().toString(), catId, startMillis, service.trim(), location, pricePence)
+            )
+            if (!inserted) {
                 _bookingError.value = "Appointment overlaps an existing booking (estimated 2 hours)."
-            } else {
-                db.visits().insert(Visit(UUID.randomUUID().toString(), catId, startMillis, service.trim(), location, pricePence))
             }
         }
     }
