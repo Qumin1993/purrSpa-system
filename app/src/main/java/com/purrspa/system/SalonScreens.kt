@@ -37,6 +37,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
+    var catHistory by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
@@ -92,6 +93,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Text(cat.name, style = MaterialTheme.typography.titleMedium)
                             Text("${cat.breed.ifBlank { "Breed not specified" }} • Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}", color = MaterialTheme.colorScheme.secondary)
                         }
+                        TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
                     }
                 }
@@ -271,6 +273,28 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     }
     editingCat?.let { item ->
         EditCatDialog(item, onClose = { editingCat = null }, onSave = { vm.updateCat(it); editingCat = null })
+    }
+    catHistory?.let { cat ->
+        val history = visits.filter { it.catId == cat.id }.sortedByDescending { it.startMillis }
+        AlertDialog(
+            onDismissRequest = { catHistory = null },
+            title = { Text("${cat.name} • Visit history") },
+            text = {
+                Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}")
+                    if (cat.notes.isNotBlank()) Text("Handling notes: ${cat.notes}")
+                    Text("${history.size} recorded visits", style = MaterialTheme.typography.titleMedium)
+                    if (history.isEmpty()) Text("No visits recorded for this cat.")
+                    history.forEach { visit ->
+                        HorizontalDivider()
+                        Text(dateTime(visit.startMillis), style = MaterialTheme.typography.titleSmall)
+                        Text("${visit.service} • ${visit.status}")
+                        Text("£${"%.2f".format(Locale.UK, visit.pricePence / 100.0)} • ${visit.location}")
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { catHistory = null }) { Text("Close") } }
+        )
     }
     bookingError?.let { message ->
         AlertDialog(onDismissRequest = { vm.clearBookingError() }, title = { Text("Booking conflict") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { vm.clearBookingError() }) { Text("OK") } })
