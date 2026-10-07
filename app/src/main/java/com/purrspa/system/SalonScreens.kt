@@ -12,6 +12,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import com.purrspa.system.reports.VisitPdf
 import androidx.compose.ui.unit.dp
 import com.purrspa.system.data.*
 import java.text.SimpleDateFormat
@@ -20,6 +23,7 @@ import java.util.Locale
 
 @Composable
 fun SalonScreen(page: String, vm: SalonViewModel) {
+    val context = LocalContext.current
     val clients by vm.clients.collectAsStateWithLifecycle()
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
@@ -56,6 +60,14 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
+                                val reportCat = cats.firstOrNull { it.id == visit.catId }
+                                val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
+                                TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
+                                    if (reportCat != null && reportOwner != null) {
+                                        runCatching { VisitPdf.share(context, visit, reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
+                                            .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
+                                    }
+                                }) { Text("Share PDF") }
                                 if (visit.status == "SCHEDULED") {
                                     TextButton(onClick = { vm.setVisitStatus(visit, "IN_PROGRESS") }) { Text("Start") }
                                     TextButton(onClick = { vm.setVisitStatus(visit, "CANCELLED") }) { Text("Cancel") }
@@ -73,6 +85,14 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text(name, Modifier.weight(1f)); Text(price) } }
                 }
                 Text("Reference prices only. Booking price is saved independently.", color = MaterialTheme.colorScheme.secondary)
+            }
+            "Reports" -> {
+                Text("Completed visit reports", style = MaterialTheme.typography.titleLarge)
+                Text("Open Visits to share a report PDF. Check private notes before sharing.")
+                visits.filter { it.status == "COMPLETED" }.forEach { visit ->
+                    val reportCat = cats.firstOrNull { it.id == visit.catId }
+                    Text("${reportCat?.name ?: "Unknown"} · ${dateTime(visit.startMillis)}")
+                }
             }
             "Notes" -> {
                 Text("Visit notes", style = MaterialTheme.typography.titleLarge)
