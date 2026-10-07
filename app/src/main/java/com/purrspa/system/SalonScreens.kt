@@ -133,7 +133,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         (visitSearch.isBlank() ||
                             visit.service.contains(visitSearch, ignoreCase = true) ||
                             cat?.name?.contains(visitSearch, ignoreCase = true) == true ||
-                            owner?.name?.contains(visitSearch, ignoreCase = true) == true)
+                            owner?.name?.contains(visitSearch, ignoreCase = true) == true ||
+                            owner?.phone?.contains(visitSearch, ignoreCase = true) == true ||
+                            visit.location.contains(visitSearch, ignoreCase = true))
                 }.let { filtered ->
                     if (page == "Calendar") filtered.sortedBy { it.startMillis }
                     else filtered.sortedByDescending { it.startMillis }
