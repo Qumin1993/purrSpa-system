@@ -12,6 +12,16 @@ import java.util.Locale
 
 /** Single visit report, shared only through Android's chooser. */
 object VisitPdf {
+    private const val MAX_CACHED_REPORTS = 12
+
+    /** Remove oldest temporary reports, keeping a small recent share history. */
+    private fun pruneCache(dir: File) {
+        dir.listFiles()?.filter { it.isFile && it.extension == "pdf" }
+            ?.sortedByDescending { it.lastModified() }
+            ?.drop(MAX_CACHED_REPORTS)
+            ?.forEach { it.delete() }
+    }
+
     fun share(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?) {
         val file = create(context, visit, cat, client, assessment)
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -78,6 +88,7 @@ object VisitPdf {
                 temp.copyTo(output, overwrite = true)
                 temp.delete()
             }
+            pruneCache(dir)
             return output
         } finally { document.close() }
     }
