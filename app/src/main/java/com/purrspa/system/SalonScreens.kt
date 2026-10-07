@@ -182,6 +182,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 }
                 val scopedTotal = if (page == "Calendar" && selectedDay != null) visits.count { java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay } else visits.size
                 Text("Showing ${visibleVisits.size} of $scopedTotal visits", color = MaterialTheme.colorScheme.secondary)
+                if (visitSearch.isNotBlank() || visitStatusFilter != "ALL") {
+                    TextButton(onClick = { visitSearch = ""; visitStatusFilter = "ALL" }) { Text("Clear filters") }
+                }
                 if (visibleVisits.isEmpty()) Text("No visits match these filters.")
                 visibleVisits.forEach { visit ->
                     Card {
