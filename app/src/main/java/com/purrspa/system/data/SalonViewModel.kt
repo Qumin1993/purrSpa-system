@@ -37,6 +37,10 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
+        if (!AppointmentRules.validNewStart(startMillis, System.currentTimeMillis())) {
+            _bookingError.value = "Choose a future appointment date and time."
+            return
+        }
         _bookingError.value = null
         viewModelScope.launch {
             val inserted = db.insertVisitIfFree(
