@@ -72,7 +72,25 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             "Visits", "Calendar" -> {
                 Button(onClick = { showAdd = true }, enabled = cats.isNotEmpty()) { Text("New visit") }
                 OutlinedTextField(value = visitSearch, onValueChange = { visitSearch = it }, label = { Text("Search visits") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                visits.filter { visitSearch.isBlank() || it.service.contains(visitSearch, ignoreCase = true) || cats.firstOrNull { cat -> cat.id == it.catId }?.name?.contains(visitSearch, ignoreCase = true) == true }.sortedByDescending { it.startMillis }.forEach { visit ->
+                val statuses = listOf("ALL", "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW")
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    statuses.forEach { status ->
+                        FilterChip(
+                            selected = visitStatusFilter == status,
+                            onClick = { visitStatusFilter = status },
+                            label = { Text(status.replace("_", " ")) }
+                        )
+                    }
+                }
+                visits.filter { visit ->
+                    val cat = cats.firstOrNull { it.id == visit.catId }
+                    val owner = clients.firstOrNull { it.id == cat?.clientId }
+                    (visitStatusFilter == "ALL" || visit.status == visitStatusFilter) &&
+                        (visitSearch.isBlank() ||
+                            visit.service.contains(visitSearch, ignoreCase = true) ||
+                            cat?.name?.contains(visitSearch, ignoreCase = true) == true ||
+                            owner?.name?.contains(visitSearch, ignoreCase = true) == true)
+                }.sortedByDescending { it.startMillis }.forEach { visit ->
                     Card {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
