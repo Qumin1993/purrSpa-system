@@ -54,6 +54,8 @@ interface VisitDao {
     @Query("SELECT * FROM visits ORDER BY startMillis DESC") fun observe(): Flow<List<Visit>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Visit)
     @Update suspend fun update(item: Visit)
+    @Query("SELECT * FROM visits WHERE status NOT IN ('CANCELLED', 'NO_SHOW') AND startMillis < :endExclusive AND startMillis > :earliestStart LIMIT 1")
+    suspend fun findOverlapping(endExclusive: Long, earliestStart: Long): Visit?
 }
 @Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 2, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
@@ -61,6 +63,17 @@ abstract class PurrDatabase : RoomDatabase() {
     abstract fun cats(): CatDao
     abstract fun visits(): VisitDao
     abstract fun assessments(): AssessmentDao
+    suspend fun insertVisitIfFree(item: Visit): Boolean = withTransaction {
+        val duration = AppointmentRules.DEFAULT_DURATION_MINUTES * 60_000L
+        val endExclusive = Math.addExact(item.startMillis, duration)
+        val earliestStart = Math.subtractExact(item.startMillis, duration)
+        if (visits().findOverlapping(endExclusive, earliestStart) != null) false
+        else {
+            visits().insert(item)
+            true
+        }
+    }
+
     companion object {
         val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
