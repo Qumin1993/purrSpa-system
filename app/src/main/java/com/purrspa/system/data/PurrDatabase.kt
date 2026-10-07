@@ -57,6 +57,8 @@ interface VisitDao {
     @Query("SELECT * FROM visits ORDER BY startMillis DESC") fun observe(): Flow<List<Visit>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Visit)
     @Update suspend fun update(item: Visit)
+    @Query("UPDATE visits SET notes = :notes WHERE id = :id")
+    suspend fun updateNotes(id: String, notes: String): Int
     @Query("SELECT * FROM visits WHERE status NOT IN ('CANCELLED', 'NO_SHOW') AND startMillis < :endExclusive AND startMillis > :earliestStart LIMIT 1")
     suspend fun findOverlapping(endExclusive: Long, earliestStart: Long): Visit?
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
