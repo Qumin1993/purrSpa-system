@@ -233,7 +233,7 @@ private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (Stri
     var owner by rememberSaveable { mutableStateOf(clients.first().id) }; var expanded by remember { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }; var breed by rememberSaveable { mutableStateOf("") }; var notes by rememberSaveable { mutableStateOf("") }
     AlertDialog(onDismissRequest=onClose,title={Text("New cat")},text={
-        Column {
+        Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Box { OutlinedButton(onClick={expanded=true}) { Text(clients.firstOrNull { it.id==owner }?.name ?: "Select owner") }
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) { clients.forEach { c -> DropdownMenuItem(text={Text(c.name)},onClick={owner=c.id;expanded=false}) } }
             }
@@ -250,7 +250,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
-        Column {
+        Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Box { OutlinedButton(onClick={expanded=true}){Text(cats.firstOrNull{it.id==catId}?.name ?: "Select cat")}
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) { cats.forEach { c -> DropdownMenuItem(text={Text(c.name)},onClick={catId=c.id;expanded=false}) } }
             }
