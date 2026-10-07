@@ -123,6 +123,24 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.minusDays(1).toString() } }) { Text("Previous day") }
                         TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.plusDays(1).toString() } }) { Text("Next day") }
                     }
+                    if (selectedDay != null) {
+                        val weekStart = selectedDay.with(java.time.DayOfWeek.MONDAY)
+                        Text("Week at a glance", style = MaterialTheme.typography.titleMedium)
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            (0L..6L).forEach { offset ->
+                                val day = weekStart.plusDays(offset)
+                                val count = visits.count { visit ->
+                                    visit.status !in setOf("CANCELLED", "NO_SHOW") &&
+                                        java.time.Instant.ofEpochMilli(visit.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == day
+                                }
+                                FilterChip(
+                                    selected = selectedDay == day,
+                                    onClick = { calendarDay = day.toString() },
+                                    label = { Text("${day.format(DateTimeFormatter.ofPattern("EEE dd", Locale.UK))} · $count") }
+                                )
+                            }
+                        }
+                    }
                     if (selectedDay == null) Text("Enter a valid date.", color = MaterialTheme.colorScheme.error)
                 }
                 val visibleVisits = visits.filter { visit ->
