@@ -4,7 +4,7 @@
 - Android Compose tablet navigation shell and Purr Spa color palette.
 - Room v1 clients, cats, visits with foreign keys and reactive Flow queries.
 - Client and cat creation, editing dialogs and listing, with client search (name/phone/email) and cat search (name/breed/owner), result counts and empty states.
-- Appointment list filtering by cat name, owner, service and visit status with result counts and empty states and appointment creation with GBP integer-pence storage, strict local date parsing, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
+- Appointment list filtering by cat name, owner, service and visit status with result counts and empty states and appointment creation with GBP integer-pence storage, strict local date parsing (rejects UK DST gaps/ambiguous times), rejects past bookings, lifecycle-aware observation and transactional overlap checks (temporary 120-minute duration).
 - Booking conflict message reset on new attempts. Visit transitions SCHEDULED -> IN_PROGRESS -> COMPLETED, cancellation and no-show, with compare-and-set SQL updates to avoid stale-state overwrites.
 - Persisted visit notes with edit dialog and notes index.
 - Room v2 per-visit grooming assessment, seven behavior ratings (-1 not assessed), coat observations and recommendations, with explicit v1->v2 migration.
