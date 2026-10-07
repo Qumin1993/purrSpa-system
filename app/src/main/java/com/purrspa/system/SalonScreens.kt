@@ -123,6 +123,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.minusDays(1).toString() } }) { Text("Previous day") }
                         TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.plusDays(1).toString() } }) { Text("Next day") }
                     }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.minusWeeks(1).toString() } }) { Text("Previous week") }
+                        TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.plusWeeks(1).toString() } }) { Text("Next week") }
+                    }
                     if (selectedDay != null) {
                         val weekStart = selectedDay.with(java.time.DayOfWeek.MONDAY)
                         Text("Week at a glance", style = MaterialTheme.typography.titleMedium)
