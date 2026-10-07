@@ -117,7 +117,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         "Visits", "Calendar" -> AddVisitDialog(cats, onClose = { showAdd = false }, onSave = { c,t,s,l,p -> vm.addVisit(c,t,s,l,p); showAdd = false })
     }
 }
-private fun dateTime(ms: Long) = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.UK).format(Date(ms))
+private fun dateTime(ms: Long) = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.UK).withZone(ZoneId.of("Europe/London")).format(java.time.Instant.ofEpochMilli(ms))
 
 @Composable
 private fun Field(value: String, onChange: (String)->Unit, label: String) {
