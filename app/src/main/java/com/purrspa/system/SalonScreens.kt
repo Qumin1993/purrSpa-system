@@ -172,12 +172,13 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("The PDF includes the owner's name, cat details, handling scores and home care recommendations.")
-                    Checkbox(
-                        checked = includePrivateNotes,
-                        onCheckedChange = { includePrivateNotes = it },
-                        modifier = Modifier.padding(4.dp)
-                    )
-                    Text("Include private groomer visit notes")
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = includePrivateNotes,
+                            onCheckedChange = { includePrivateNotes = it }
+                        )
+                        Text("Include private groomer visit notes")
+                    }
                     Text("Confirm the recipient before sending.")
                 }
             },
