@@ -59,6 +59,8 @@ interface VisitDao {
     @Update suspend fun update(item: Visit)
     @Query("SELECT * FROM visits WHERE status NOT IN ('CANCELLED', 'NO_SHOW') AND startMillis < :endExclusive AND startMillis > :earliestStart LIMIT 1")
     suspend fun findOverlapping(endExclusive: Long, earliestStart: Long): Visit?
+    @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
+    suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
 @Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 2, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
