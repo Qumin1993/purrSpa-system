@@ -26,6 +26,7 @@ import java.util.Locale
 @Composable
 fun SalonScreen(page: String, vm: SalonViewModel) {
     val context = LocalContext.current
+    val bookingError by vm.bookingError.collectAsStateWithLifecycle()
     val clients by vm.clients.collectAsStateWithLifecycle()
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
@@ -104,6 +105,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             else -> Text("Planned module. No live functionality yet.")
         }
+    }
+    bookingError?.let { message ->
+        AlertDialog(onDismissRequest = { vm.clearBookingError() }, title = { Text("Booking conflict") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { vm.clearBookingError() }) { Text("OK") } })
     }
     assessingVisit?.let { visit ->
         GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = java.util.UUID.randomUUID().toString(), visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null })
