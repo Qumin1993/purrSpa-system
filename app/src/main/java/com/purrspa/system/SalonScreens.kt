@@ -68,7 +68,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             "Clients" -> {
                 Button(onClick = { showAdd = true }) { Text("Add client") }
                 OutlinedTextField(value = clientSearch, onValueChange = { clientSearch = it }, label = { Text("Search clients") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                val matchingClients = clients.filter { clientSearch.isBlank() || it.name.contains(clientSearch, ignoreCase = true) || it.phone.contains(clientSearch, ignoreCase = true) || it.email.contains(clientSearch, ignoreCase = true) }
+                val matchingClients = clients.filter { clientSearch.isBlank() || it.name.contains(clientSearch, ignoreCase = true) || it.phone.contains(clientSearch, ignoreCase = true) || it.email.contains(clientSearch, ignoreCase = true) || it.address.contains(clientSearch, ignoreCase = true) || cats.any { cat -> cat.clientId == it.id && cat.name.contains(clientSearch, ignoreCase = true) } }
                 Text("Showing ${matchingClients.size} of ${clients.size} clients", color = MaterialTheme.colorScheme.secondary)
                 if (matchingClients.isEmpty()) Text("No clients match your search.")
                 matchingClients.forEach { client ->
@@ -86,7 +86,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             "Cats" -> {
                 Button(onClick = { showAdd = true }, enabled = clients.isNotEmpty()) { Text("Add cat") }
                 OutlinedTextField(value = catSearch, onValueChange = { catSearch = it }, label = { Text("Search cats") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                val matchingCats = cats.filter { catSearch.isBlank() || it.name.contains(catSearch, ignoreCase = true) || it.breed.contains(catSearch, ignoreCase = true) || clients.firstOrNull { owner -> owner.id == it.clientId }?.name?.contains(catSearch, ignoreCase = true) == true }
+                val matchingCats = cats.filter { catSearch.isBlank() || it.name.contains(catSearch, ignoreCase = true) || it.breed.contains(catSearch, ignoreCase = true) || clients.firstOrNull { owner -> owner.id == it.clientId }?.let { owner -> owner.name.contains(catSearch, ignoreCase = true) || owner.phone.contains(catSearch, ignoreCase = true) } == true }
                 Text("Showing ${matchingCats.size} of ${cats.size} cats", color = MaterialTheme.colorScheme.secondary)
                 if (matchingCats.isEmpty()) Text("No cats match your search.")
                 matchingCats.forEach { cat ->
