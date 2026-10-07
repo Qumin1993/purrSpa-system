@@ -46,7 +46,7 @@ private fun PurrSpaApp() {
     MaterialTheme(colorScheme = lightColorScheme(primary = Rose, background = Cream, surface = Color.White)) {
         Row(Modifier.fillMaxSize().background(Cream)) {
             Column(
-                Modifier.width(208.dp).fillMaxHeight().background(Ink).padding(16.dp),
+                Modifier.width(208.dp).fillMaxHeight().background(Ink).verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Image(painter = painterResource(R.drawable.purr_cat_ginger), contentDescription = "Purr Spa illustrated ginger cat", modifier = Modifier.size(88.dp).align(Alignment.CenterHorizontally))
@@ -67,7 +67,7 @@ private fun PurrSpaApp() {
                         }
                     }
                 }
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(24.dp))
                 Text("Happy Cats\nHappier People ♥", color = Gold, lineHeight = 24.sp)
             }
             Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(28.dp)) {
