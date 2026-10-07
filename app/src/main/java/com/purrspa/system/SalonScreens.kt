@@ -226,7 +226,7 @@ private fun AddClientDialog(onClose: ()->Unit, onSave: (String,String,String,Str
     var name by rememberSaveable { mutableStateOf("") }; var phone by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }; var address by rememberSaveable { mutableStateOf("") }
     AlertDialog(onDismissRequest = onClose, title = { Text("New client") }, text = {
-        Column { Field(name,{name=it},"Name *"); Field(phone,{phone=it},"Phone"); Field(email,{email=it},"Email"); Field(address,{address=it},"Address") }
+        Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) { Field(name,{name=it},"Name *"); Field(phone,{phone=it},"Phone"); Field(email,{email=it},"Email"); Field(address,{address=it},"Address") }
     }, confirmButton = { TextButton(enabled=name.isNotBlank(),onClick={onSave(name,phone,email,address)}){Text("Save")} }, dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 @Composable
@@ -321,7 +321,7 @@ private fun EditClientDialog(item: Client, onClose: () -> Unit, onSave: (Client)
     var email by remember(item.id) { mutableStateOf(item.email) }
     var address by remember(item.id) { mutableStateOf(item.address) }
     AlertDialog(onDismissRequest = onClose, title = { Text("Edit client") }, text = {
-        Column {
+        Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Field(name, { name = it }, "Name")
             Field(phone, { phone = it }, "Phone")
             Field(email, { email = it }, "Email")
@@ -338,7 +338,7 @@ private fun EditCatDialog(item: Cat, onClose: () -> Unit, onSave: (Cat) -> Unit)
     var breed by remember(item.id) { mutableStateOf(item.breed) }
     var notes by remember(item.id) { mutableStateOf(item.notes) }
     AlertDialog(onDismissRequest = onClose, title = { Text("Edit cat") }, text = {
-        Column {
+        Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Field(name, { name = it }, "Name")
             Field(breed, { breed = it }, "Breed")
             OutlinedTextField(notes, { notes = it }, label = { Text("Handling notes") }, modifier = Modifier.fillMaxWidth())
