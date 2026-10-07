@@ -176,6 +176,37 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 Text("Reference prices only. Booking price is saved independently.", color = MaterialTheme.colorScheme.secondary)
             }
             "Reports" -> {
+                val ukZone = ZoneId.of("Europe/London")
+                var reportMonth by rememberSaveable { mutableStateOf(java.time.YearMonth.now(ukZone).toString()) }
+                val selectedMonth = runCatching { java.time.YearMonth.parse(reportMonth) }.getOrNull()
+                Text("Monthly service value", style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = reportMonth,
+                        onValueChange = { reportMonth = it },
+                        label = { Text("Month YYYY-MM") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { reportMonth = java.time.YearMonth.now(ukZone).toString() }) { Text("This month") }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(enabled = selectedMonth != null, onClick = { selectedMonth?.let { reportMonth = it.minusMonths(1).toString() } }) { Text("Previous") }
+                    TextButton(enabled = selectedMonth != null, onClick = { selectedMonth?.let { reportMonth = it.plusMonths(1).toString() } }) { Text("Next") }
+                }
+                if (selectedMonth == null) {
+                    Text("Enter a valid month.", color = MaterialTheme.colorScheme.error)
+                } else {
+                    val monthlyCompleted = visits.filter {
+                        it.status == "COMPLETED" &&
+                            java.time.YearMonth.from(java.time.Instant.ofEpochMilli(it.startMillis).atZone(ukZone)) == selectedMonth
+                    }
+                    val serviceValuePence = monthlyCompleted.sumOf { it.pricePence }
+                    Text("Completed visits: ${monthlyCompleted.size}", style = MaterialTheme.typography.titleMedium)
+                    Text("Service value: £${"%.2f".format(Locale.UK, serviceValuePence / 100.0)}", style = MaterialTheme.typography.titleLarge)
+                    Text("Based on completed appointments, not confirmed payments or accounting revenue.", color = MaterialTheme.colorScheme.secondary)
+                }
+                HorizontalDivider()
                 Text("Completed visit reports", style = MaterialTheme.typography.titleLarge)
                 Text("Review the report contents before sharing.")
                 visits.filter { it.status == "COMPLETED" }.forEach { visit ->
