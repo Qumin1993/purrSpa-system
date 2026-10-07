@@ -94,10 +94,22 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             "Reports" -> {
                 Text("Completed visit reports", style = MaterialTheme.typography.titleLarge)
-                Text("Open Visits to share a report PDF. Check private notes before sharing.")
+                Text("Review the report contents before sharing.")
                 visits.filter { it.status == "COMPLETED" }.forEach { visit ->
                     val reportCat = cats.firstOrNull { it.id == visit.catId }
-                    Text("${reportCat?.name ?: "Unknown"} · ${dateTime(visit.startMillis)}")
+                    val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
+                    Card(Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(Modifier.weight(1f)) {
+                                Text(reportCat?.name ?: "Unknown cat", style = MaterialTheme.typography.titleMedium)
+                                Text(dateTime(visit.startMillis))
+                            }
+                            TextButton(
+                                enabled = reportCat != null && reportOwner != null,
+                                onClick = { reportToShare = visit }
+                            ) { Text("Share PDF") }
+                        }
+                    }
                 }
             }
             "Notes" -> {
