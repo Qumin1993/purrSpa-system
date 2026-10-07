@@ -98,6 +98,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         OutlinedTextField(value = calendarDay, onValueChange = { calendarDay = it }, label = { Text("Day YYYY-MM-DD") }, singleLine = true, modifier = Modifier.weight(1f))
                         TextButton(onClick = { calendarDay = java.time.LocalDate.now(ZoneId.of("Europe/London")).toString() }) { Text("Today") }
                     }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.minusDays(1).toString() } }) { Text("Previous day") }
+                        TextButton(enabled = selectedDay != null, onClick = { selectedDay?.let { calendarDay = it.plusDays(1).toString() } }) { Text("Next day") }
+                    }
                     if (selectedDay == null) Text("Enter a valid date.", color = MaterialTheme.colorScheme.error)
                 }
                 val visibleVisits = visits.filter { visit ->
