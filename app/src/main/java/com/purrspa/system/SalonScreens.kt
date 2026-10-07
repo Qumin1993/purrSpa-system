@@ -142,7 +142,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     val activeCount = visibleVisits.count { it.status != "CANCELLED" && it.status != "NO_SHOW" }
                     Text("${selectedDay.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale.UK))} • $activeCount active appointments", style = MaterialTheme.typography.titleMedium)
                 }
-                Text("Showing ${visibleVisits.size} of ${visits.size} visits", color = MaterialTheme.colorScheme.secondary)
+                val scopedTotal = if (page == "Calendar" && selectedDay != null) visits.count { java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay } else visits.size
+                Text("Showing ${visibleVisits.size} of $scopedTotal visits", color = MaterialTheme.colorScheme.secondary)
                 if (visibleVisits.isEmpty()) Text("No visits match these filters.")
                 visibleVisits.forEach { visit ->
                     Card {
