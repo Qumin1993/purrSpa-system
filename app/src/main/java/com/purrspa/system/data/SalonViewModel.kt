@@ -25,6 +25,9 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
         viewModelScope.launch { db.visits().insert(Visit(UUID.randomUUID().toString(), catId, startMillis, service.trim(), location, pricePence)) }
     }
+    fun saveVisitNotes(visit: Visit, notes: String) {
+        viewModelScope.launch { db.visits().update(visit.copy(notes = notes.trim())) }
+    }
     fun setVisitStatus(visit: Visit, status: String) {
         val allowed = mapOf("SCHEDULED" to setOf("IN_PROGRESS", "CANCELLED", "NO_SHOW"), "IN_PROGRESS" to setOf("COMPLETED", "CANCELLED"))
         if (status !in allowed[visit.status].orEmpty()) return
