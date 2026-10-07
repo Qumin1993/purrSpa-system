@@ -37,6 +37,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
+    var includePrivateNotes by remember { mutableStateOf(false) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(page, style = MaterialTheme.typography.headlineLarge)
@@ -71,6 +72,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
                                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
                                     if (reportCat != null && reportOwner != null) {
+                                        includePrivateNotes = false
                                         reportToShare = visit
                                     }
                                 }) { Text("Share PDF") }
@@ -106,7 +108,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             }
                             TextButton(
                                 enabled = reportCat != null && reportOwner != null,
-                                onClick = { reportToShare = visit }
+                                onClick = { includePrivateNotes = false; reportToShare = visit }
                             ) { Text("Share PDF") }
                         }
                     }
@@ -127,12 +129,22 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         AlertDialog(
             onDismissRequest = { reportToShare = null },
             title = { Text("Share grooming report?") },
-            text = { Text("The PDF includes the owner's name, cat details, visit notes, handling scores and recommendations. Review the information and confirm the recipient before sending.") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("The PDF includes the owner's name, cat details, handling scores and home care recommendations.")
+                    Checkbox(
+                        checked = includePrivateNotes,
+                        onCheckedChange = { includePrivateNotes = it },
+                        label = { Text("Include private groomer visit notes") }
+                    )
+                    Text("Confirm the recipient before sending.")
+                }
+            },
             confirmButton = {
                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
                     reportToShare = null
                     if (reportCat != null && reportOwner != null) {
-                        runCatching { VisitPdf.share(context, visit, reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
+                        runCatching { VisitPdf.share(context, if (includePrivateNotes) visit else visit.copy(notes = ""), reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
                             .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
                     }
                 }) { Text("Continue to share") }
