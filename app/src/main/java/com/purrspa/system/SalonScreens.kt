@@ -2,6 +2,8 @@ package com.purrspa.system
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -57,7 +59,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
                             Text("${dateTime(visit.startMillis)} • ${visit.location} • £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)} • ${visit.status}")
                             if (visit.notes.isNotBlank()) Text("Notes: ${visit.notes}")
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
