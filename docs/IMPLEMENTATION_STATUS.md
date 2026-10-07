@@ -10,7 +10,7 @@
 - Room v2 per-visit grooming assessment, seven behavior ratings (-1 not assessed), coat observations and recommendations, with explicit v1->v2 migration.
 - Groomer form editor from visit screen; assessment saved to Room (currently only on Save, not autosaved).
 - Android PdfDocument multi-page text report generator with word-aware wrapping and a new unexecuted Robolectric layout test and ACTION_SEND chooser with private FileProvider, UK-local dates, explicit temporary URI grants and a confirmation step before sharing. Reports screen has direct share actions; private visit notes are excluded by default and can be explicitly included.
-- Static Purr Spa service reference price screen.
+- Reports monthly completed-service count and GBP service value with month navigation (not payment or revenue accounting).\n- Static Purr Spa service reference price screen.
 - Dashboard client/cat/visit totals, current-day active appointment count (Europe/London) and upcoming appointment list, now with an original charcoal cat vector. Sidebar uses an original ginger cat vector. Asset provenance is documented in design/CAT_ASSETS.md.
 - Product and lifecycle architecture plan at docs/PROJECT_PLAN.md.
 
