@@ -70,7 +70,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
             "Visits", "Calendar" -> {
                 Button(onClick = { showAdd = true }, enabled = cats.isNotEmpty()) { Text("New visit") }
-                visits.sortedByDescending { it.startMillis }.forEach { visit ->
+                OutlinedTextField(value = visitSearch, onValueChange = { visitSearch = it }, label = { Text("Search visits") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                visits.filter { visitSearch.isBlank() || it.service.contains(visitSearch, ignoreCase = true) || cats.firstOrNull { cat -> cat.id == it.catId }?.name?.contains(visitSearch, ignoreCase = true) == true }.sortedByDescending { it.startMillis }.forEach { visit ->
                     Card {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
