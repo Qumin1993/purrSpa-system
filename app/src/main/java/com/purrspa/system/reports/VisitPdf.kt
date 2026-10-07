@@ -21,6 +21,7 @@ object VisitPdf {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            clipData = android.content.ClipData.newUri(context.contentResolver, "Purr Spa report", uri)
         }
         context.startActivity(Intent.createChooser(intent, "Share grooming report"))
     }
@@ -33,7 +34,9 @@ object VisitPdf {
             val title = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(30, 28, 26); textSize = 25f; isFakeBoldText = true }
             val body = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.DKGRAY; textSize = 12f }
             val accent = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(176, 130, 68); textSize = 12f }
-            val whenText = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.UK).format(Date(visit.startMillis))
+            val whenText = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.UK)
+                .withZone(java.time.ZoneId.of("Europe/London"))
+                .format(java.time.Instant.ofEpochMilli(visit.startMillis))
             val lines = mutableListOf(
                 "Cat: ${cat.name}", "Breed: ${cat.breed.ifBlank { "Not specified" }}",
                 "Owner: ${client.name}", "Visit: $whenText", "Service: ${visit.service}",
