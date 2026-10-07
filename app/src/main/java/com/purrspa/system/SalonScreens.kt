@@ -270,7 +270,7 @@ private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (Stri
 private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,Long,String,String,Long)->Unit) {
     var catId by rememberSaveable { mutableStateOf(cats.first().id) }; var expanded by remember { mutableStateOf(false) }
     var service by rememberSaveable { mutableStateOf("Full groom") }; var location by rememberSaveable { mutableStateOf("Salon") }
-    var date by rememberSaveable { mutableStateOf(SimpleDateFormat("yyyy-MM-dd",Locale.UK).format(Date())) }
+    var date by rememberSaveable { mutableStateOf(java.time.LocalDate.now(ZoneId.of("Europe/London")).toString()) }
     var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
