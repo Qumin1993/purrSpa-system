@@ -30,16 +30,9 @@ object VisitPdf {
         val output = File(dir, "purrspa-${visit.id}.pdf")
         val document = PdfDocument()
         try {
-            val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
-            val canvas = page.canvas
             val title = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(30, 28, 26); textSize = 25f; isFakeBoldText = true }
             val body = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.DKGRAY; textSize = 12f }
             val accent = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(176, 130, 68); textSize = 12f }
-            var y = 55f
-            canvas.drawText("PURR SPA", 44f, y, title)
-            y += 25f
-            canvas.drawText("CAT GROOMING  |  VISIT REPORT", 44f, y, accent)
-            y += 38f
             val whenText = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.UK).format(Date(visit.startMillis))
             val lines = mutableListOf(
                 "Cat: ${cat.name}", "Breed: ${cat.breed.ifBlank { "Not specified" }}",
@@ -61,31 +54,37 @@ object VisitPdf {
                     "", "HOME CARE", assessment.recommendations.ifBlank { "Not recorded" })
             }
             val wrappedLines = lines.flatMap { line ->
-                if (line.isBlank()) listOf("") else line.split(Regex("\\s+")).fold(mutableListOf<String>()) { acc, word ->
-                    val last = acc.lastOrNull()
-                    if (last != null && body.measureText("$last $word") <= 500f) acc[acc.lastIndex] = "$last $word"
-                    else acc.add(word)
-                    acc
+                if (line.isBlank()) listOf("") else {
+                    val result = mutableListOf<String>()
+                    var current = ""
+                    for (character in line) {
+                        if (current.isNotEmpty() && body.measureText(current + character) > 500f) {
+                            result.add(current)
+                            current = ""
+                        }
+                        current += character
+                    }
+                    if (current.isNotEmpty()) result.add(current)
+                    result
                 }
             }
-            for (line in wrappedLines) {
-                val words = line.split(" ")
-                var current = ""
-                for (word in words) {
-                    val next = if (current.isEmpty()) word else "$current $word"
-                    if (body.measureText(next) > 500f && current.isNotEmpty()) {
-                        if (y > 795f) break
-                        canvas.drawText(current, 44f, y, body)
-                        y += 19f
-                        current = word
-                    } else current = next
+            var index = 0
+            var pageNumber = 0
+            do {
+                pageNumber++
+                val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNumber).create())
+                val canvas = page.canvas
+                canvas.drawText("PURR SPA", 44f, 55f, title)
+                canvas.drawText("CAT GROOMING  |  VISIT REPORT", 44f, 80f, accent)
+                var y = 118f
+                while (index < wrappedLines.size && y <= 780f) {
+                    val line = wrappedLines[index++]
+                    if (line.isNotEmpty()) canvas.drawText(line, 44f, y, body)
+                    y += if (line.isEmpty()) 10f else 19f
                 }
-                if (y > 795f) break
-                canvas.drawText(current, 44f, y, body)
-                y += if (line.isEmpty()) 10f else 22f
-            }
-            canvas.drawText("Purr Spa  |  Coleraine  |  Report generated from saved visit data", 44f, 815f, accent)
-            document.finishPage(page)
+                canvas.drawText("Purr Spa  |  Coleraine  |  Page $pageNumber", 44f, 815f, accent)
+                document.finishPage(page)
+            } while (index < wrappedLines.size)
             val temp = File(dir, "${output.name}.tmp")
             temp.outputStream().use { document.writeTo(it) }
             if (!temp.renameTo(output)) {
