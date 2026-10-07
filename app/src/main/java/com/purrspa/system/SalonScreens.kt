@@ -274,6 +274,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
     val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+    val futureDate = parsed != null && AppointmentRules.validNewStart(parsed, System.currentTimeMillis())
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Box { OutlinedButton(onClick={expanded=true}){Text(cats.firstOrNull{it.id==catId}?.name ?: "Select cat")}
@@ -281,9 +282,10 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
             }
             Field(date,{date=it},"Date YYYY-MM-DD"); Field(time,{time=it},"Time HH:mm")
             if (parsed == null) Text("Enter a valid UK date and time. Clock-change times may be unavailable or ambiguous.", color = MaterialTheme.colorScheme.error)
+            else if (!futureDate) Text("Choose a future appointment time.", color = MaterialTheme.colorScheme.error)
             Field(service,{service=it},"Service"); Field(location,{location=it},"Salon or mobile"); Field(price,{price=it},"Price GBP")
         }
-    },confirmButton={TextButton(enabled=parsed!=null && pence!=null && pence>=0 && service.isNotBlank(),onClick={onSave(catId,parsed!!,service,location,pence!!)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
+    },confirmButton={TextButton(enabled=futureDate && pence!=null && pence>=0 && service.isNotBlank(),onClick={onSave(catId,parsed!!,service,location,pence!!)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 private fun java.math.BigDecimal.toLongExactOrNull(): Long? = runCatching { longValueExact() }.getOrNull()
 
