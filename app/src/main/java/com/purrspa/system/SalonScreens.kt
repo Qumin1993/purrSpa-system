@@ -139,7 +139,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     else filtered.sortedByDescending { it.startMillis }
                 }
                 if (page == "Calendar" && selectedDay != null) {
-                    val activeCount = visibleVisits.count { it.status != "CANCELLED" && it.status != "NO_SHOW" }
+                    val activeCount = visits.count { visit ->
+                        java.time.Instant.ofEpochMilli(visit.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay &&
+                            visit.status != "CANCELLED" && visit.status != "NO_SHOW"
+                    }
                     Text("${selectedDay.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale.UK))} • $activeCount active appointments", style = MaterialTheme.typography.titleMedium)
                 }
                 val scopedTotal = if (page == "Calendar" && selectedDay != null) visits.count { java.time.Instant.ofEpochMilli(it.startMillis).atZone(ZoneId.of("Europe/London")).toLocalDate() == selectedDay } else visits.size
