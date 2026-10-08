@@ -408,7 +408,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     }
     if (showAdd) when(page) {
         "Clients" -> AddClientDialog(onClose = { showAdd = false }, onSave = { n,p,e,a -> vm.addClient(n,p,e,a); showAdd = false })
-        "Cats" -> AddCatDialog(clients, onClose = { showAdd = false }, onSave = { c,n,b,notes -> vm.addCat(c,n,b,notes); showAdd = false })
+        "Cats" -> AddCatDialog(clients, onClose = { showAdd = false }, onSave = { c,n,b,notes,sex,dob,neutered,health -> vm.addCat(c,n,b,notes,sex,dob,neutered,health); showAdd = false })
         "Visits", "Calendar" -> AddVisitDialog(cats, onClose = { showAdd = false }, onSave = { c,t,s,l,p -> vm.addVisit(c,t,s,l,p); showAdd = false })
     }
 }
@@ -427,17 +427,25 @@ private fun AddClientDialog(onClose: ()->Unit, onSave: (String,String,String,Str
     }, confirmButton = { TextButton(enabled=name.isNotBlank(),onClick={onSave(name,phone,email,address)}){Text("Save")} }, dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 @Composable
-private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (String,String,String,String)->Unit) {
+private fun AddCatDialog(clients: List<Client>, onClose: ()->Unit, onSave: (String,String,String,String,String,String,Boolean,String)->Unit) {
     var owner by rememberSaveable { mutableStateOf(clients.first().id) }; var expanded by remember { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }; var breed by rememberSaveable { mutableStateOf("") }; var notes by rememberSaveable { mutableStateOf("") }
+    var sex by rememberSaveable { mutableStateOf("") }; var dob by rememberSaveable { mutableStateOf("") }
+    var neutered by rememberSaveable { mutableStateOf(false) }; var health by rememberSaveable { mutableStateOf("") }
+    val validDob = dob.isBlank() || runCatching { java.time.LocalDate.parse(dob) }.getOrNull()?.let { !it.isAfter(java.time.LocalDate.now(ZoneId.of("Europe/London"))) } == true
     AlertDialog(onDismissRequest=onClose,title={Text("New cat")},text={
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Box { OutlinedButton(onClick={expanded=true}) { Text(clients.firstOrNull { it.id==owner }?.name ?: "Select owner") }
                 DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}) { clients.forEach { c -> DropdownMenuItem(text={Text(c.name)},onClick={owner=c.id;expanded=false}) } }
             }
-            Field(name,{name=it},"Cat name *"); Field(breed,{breed=it},"Breed"); Field(notes,{notes=it},"Handling notes")
+            Field(name,{name=it},"Cat name *"); Field(breed,{breed=it},"Breed")
+            Field(sex,{sex=it},"Sex (optional)"); Field(dob,{dob=it},"Date of birth YYYY-MM-DD (optional)")
+            if (!validDob) Text("Enter a valid birth date, not in the future.", color = MaterialTheme.colorScheme.error)
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Checkbox(checked=neutered,onCheckedChange={neutered=it}); Text("Neutered") }
+            OutlinedTextField(health,{health=it},label={Text("Owner-reported health and medication notes")},modifier=Modifier.fillMaxWidth())
+            Field(notes,{notes=it},"Handling notes")
         }
-    },confirmButton={TextButton(enabled=name.isNotBlank(),onClick={onSave(owner,name,breed,notes)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
+    },confirmButton={TextButton(enabled=name.isNotBlank() && validDob,onClick={onSave(owner,name,breed,notes,sex,dob,neutered,health)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
 @Composable
 private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,Long,String,String,Long)->Unit) {
