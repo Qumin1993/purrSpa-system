@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 data class Client(@PrimaryKey val id: String, val name: String, val phone: String, val email: String = "", val address: String = "")
 
 @Entity(tableName = "cats", foreignKeys = [ForeignKey(entity = Client::class, parentColumns = ["id"], childColumns = ["clientId"], onDelete = ForeignKey.RESTRICT)], indices = [Index("clientId")])
-data class Cat(@PrimaryKey val id: String, val clientId: String, val name: String, val breed: String = "", val notes: String = "")
+data class Cat(@PrimaryKey val id: String, val clientId: String, val name: String, val breed: String = "", val notes: String = "", val sex: String = "", val dateOfBirth: String = "", val neutered: Boolean = false, val healthNotes: String = "")
 
 @Entity(tableName = "visits", foreignKeys = [ForeignKey(entity = Cat::class, parentColumns = ["id"], childColumns = ["catId"], onDelete = ForeignKey.RESTRICT)], indices = [Index("catId"), Index("startMillis")])
 data class Visit(@PrimaryKey val id: String, val catId: String, val startMillis: Long, val service: String, val location: String, val pricePence: Long, val status: String = "SCHEDULED", val notes: String = "")
@@ -64,7 +64,7 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 2, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 3, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
@@ -96,9 +96,17 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_grooming_assessments_visitId ON grooming_assessments(visitId)")
             }
         }
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE cats ADD COLUMN sex TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE cats ADD COLUMN dateOfBirth TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE cats ADD COLUMN neutered INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE cats ADD COLUMN healthNotes TEXT NOT NULL DEFAULT ''")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
         }
     }
 }
