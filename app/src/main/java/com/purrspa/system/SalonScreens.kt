@@ -415,6 +415,32 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
         )
     }
+    editingCharges?.let { visit ->
+        var travel by remember(visit.id) { mutableStateOf("%.2f".format(Locale.UK, visit.travelFeePence / 100.0)) }
+        var deposit by remember(visit.id) { mutableStateOf("%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)) }
+        val travelPence = remember(travel) { travel.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+        val depositPence = remember(deposit) { deposit.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+        val total = travelPence?.let { runCatching { Math.addExact(visit.pricePence, it) }.getOrNull() }
+        val valid = travelPence != null && depositPence != null && travelPence >= 0 && depositPence >= 0 && total != null && depositPence <= total
+        AlertDialog(
+            onDismissRequest = { editingCharges = null },
+            title = { Text("Travel fee and deposit") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Service: £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)}")
+                    Field(travel, { travel = it }, "Travel fee GBP")
+                    Field(deposit, { deposit = it }, "Deposit already received GBP")
+                    if (total != null && depositPence != null && valid) Text("Remaining: £${"%.2f".format(Locale.UK, (total - depositPence) / 100.0)}")
+                    if (!valid) Text("Enter valid amounts. Deposit cannot exceed the total.", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            confirmButton = { TextButton(enabled = valid, onClick = {
+                vm.setVisitCharges(visit, travelPence!!, depositPence!!)
+                editingCharges = null
+            }) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { editingCharges = null }) { Text("Cancel") } }
+        )
+    }
     editingPayment?.let { visit ->
         var method by remember(visit.id) { mutableStateOf(visit.paymentMethod.ifBlank { "CASH" }) }
         AlertDialog(
