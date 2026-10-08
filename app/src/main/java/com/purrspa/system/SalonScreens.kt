@@ -373,6 +373,24 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     assessingVisit?.let { visit ->
         GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = java.util.UUID.randomUUID().toString(), visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null })
     }
+    pendingStatusChange?.let { (visit, status) ->
+        AlertDialog(
+            onDismissRequest = { pendingStatusChange = null },
+            title = { Text(if (status == "CANCELLED") "Cancel appointment?" else "Mark as no-show?") },
+            text = {
+                Text("Confirm change for ${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown cat"} on ${dateTime(visit.startMillis)}. The booking slot will become available.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.setVisitStatus(visit, status)
+                    pendingStatusChange = null
+                }) { Text("Confirm") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingStatusChange = null }) { Text("Keep booking") }
+            }
+        )
+    }
     editingVisit?.let { visit ->
         VisitNotesDialog(visit.notes, onClose = { editingVisit = null }, onSave = { notes -> vm.saveVisitNotes(visit, notes); editingVisit = null })
     }
