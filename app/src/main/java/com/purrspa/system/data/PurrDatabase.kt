@@ -57,7 +57,7 @@ interface VisitDao {
     @Query("SELECT * FROM visits ORDER BY startMillis DESC") fun observe(): Flow<List<Visit>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Visit)
     @Update suspend fun update(item: Visit)
-    @Query("UPDATE visits SET paymentStatus = :status, paymentMethod = :method WHERE id = :id")
+    @Query("UPDATE visits SET paymentStatus = :status, paymentMethod = :method WHERE id = :id AND (:status != 'PAID' OR status NOT IN ('CANCELLED', 'NO_SHOW'))")
     suspend fun updatePayment(id: String, status: String, method: String): Int
     @Query("UPDATE visits SET travelFeePence = :travel, depositPaidPence = :deposit WHERE id = :id")
     suspend fun updateCharges(id: String, travel: Long, deposit: Long): Int
