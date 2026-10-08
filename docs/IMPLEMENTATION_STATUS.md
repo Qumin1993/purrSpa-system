@@ -14,12 +14,14 @@
 - Dashboard client/cat/visit totals, current-day active appointment count (Europe/London) and upcoming appointment list, now with an original charcoal cat vector. Sidebar uses an original ginger cat vector. Asset provenance is documented in design/CAT_ASSETS.md.
 - Product and lifecycle architecture plan at docs/PROJECT_PLAN.md.
 
-- Room v4 visit-level paid/unpaid flag and payment method (cash, card, bank transfer, other), with v3->v4 migration and visit payment dialog. This is full-payment tracking only, NOT a ledger, deposit tracking, partial payments, refunds or accounting reconciliation. Build and migration tests not yet run.
+- Room v5 visit-level paid/unpaid flag and payment method (cash, card, bank transfer, other), with v3->v4 and v4->v5 migrations, visit payment dialog, travel fees, deposits and remaining balance preview. This is full-payment tracking only, NOT a ledger, deposit tracking, partial payments, refunds or accounting reconciliation. Build and migration tests not yet run.
+
+- Monthly reports now separately show manually marked fully paid completed visits and their service-plus-travel amounts. This is not bank reconciliation or verified revenue.
 
 ## Known blockers and remaining work
 1. Gradle wrapper JAR/scripts missing. Run Android Studio Gradle sync with local Gradle; generate wrapper and commit it.
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
-3. Room v4 remains a prototype schema: single cat per appointment, no travel/deposit model, no owner consent/health history; grooming assessment and cat health fields exist but require migration and persistence tests. Must design proper migration before real use.
+3. Room v5 remains a prototype schema: single cat per appointment, basic travel/deposit fields but no full payment ledger, no owner consent/health history; grooming assessment and cat health fields exist but require migration and persistence tests. Must design proper migration before real use.
 4. Forms (including grooming assessment) are not durably autosaved. Creation form fields use rememberSaveable for configuration changes only; this does not replace crash recovery. Do not enter real client data until draft recovery, backup, data protection and migration tests are in place.
 5. PDF text now paginates, private visit notes are opt-in and each share uses a unique temporary filename and the PDF cache removes Purr Spa reports older than 24 hours on the next report generation, caps remaining files at 12, and cleans up partial files after generation errors, but layout, preview and immutable versioning are untested; photo capture, encrypted backup/restore, reminder scheduling and additional branding assets remain incomplete.
 6. Need proper ViewModel error surfaces, input validation, configurable visit duration, accessibility, adaptive layouts and tests. Booking conflicts are transactionally checked but currently assume 120-minute visits.
