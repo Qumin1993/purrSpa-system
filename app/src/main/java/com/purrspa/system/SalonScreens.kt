@@ -370,6 +370,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     if (cat.dateOfBirth.isNotBlank()) Text("Date of birth: ${cat.dateOfBirth}")
                     Text("Neutered: ${if (cat.neutered) "Yes" else "No / not confirmed"}")
                     if (cat.healthNotes.isNotBlank()) Text("Owner-reported health / medication notes: ${cat.healthNotes}")
+                    if (cat.healthNotes.isNotBlank()) Text("Private salon information. Check with the owner before sharing.", color = MaterialTheme.colorScheme.secondary)
                     Text("${history.size} recorded visits", style = MaterialTheme.typography.titleMedium)
                     val completed = history.filter { it.status == "COMPLETED" }
                     Text("${completed.size} completed • Service value: £${"%.2f".format(Locale.UK, completed.sumOf { it.pricePence } / 100.0)}")
