@@ -275,7 +275,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     val paidTotalPence = paidCompleted.sumOf { it.pricePence + it.travelFeePence }
                     Text("Marked fully paid: ${paidCompleted.size} visits • £${"%.2f".format(Locale.UK, paidTotalPence / 100.0)}")
                     val unpaidCompleted = monthlyCompleted.filter { it.paymentStatus != "PAID" }
-                    val unpaidBalancePence = unpaidCompleted.sumOf { (it.pricePence + it.travelFeePence - it.depositPaidPence).coerceAtLeast(0L) }
+                    val unpaidBalancePence = unpaidCompleted.sumOf { com.purrspa.system.data.VisitBalance.outstandingPence(it) ?: 0L }
                     Text("Outstanding on completed visits: £${"%.2f".format(Locale.UK, unpaidBalancePence / 100.0)}")
                     Text("Deposits are excluded from outstanding balances; paid flags and deposits are manually recorded.", color = MaterialTheme.colorScheme.secondary)
                     Text("Payment status is manually recorded; amounts are not bank-verified.", color = MaterialTheme.colorScheme.secondary)
