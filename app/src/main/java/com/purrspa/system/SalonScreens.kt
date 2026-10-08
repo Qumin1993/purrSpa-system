@@ -423,8 +423,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     editingCharges?.let { visit ->
         var travel by remember(visit.id) { mutableStateOf("%.2f".format(Locale.UK, visit.travelFeePence / 100.0)) }
         var deposit by remember(visit.id) { mutableStateOf("%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)) }
-        val travelPence = remember(travel) { travel.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
-        val depositPence = remember(deposit) { deposit.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+        val travelPence = remember(travel) { travel.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.let { runCatching { it.longValueExact() }.getOrNull() } }
+        val depositPence = remember(deposit) { deposit.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.let { runCatching { it.longValueExact() }.getOrNull() } }
         val total = travelPence?.let { runCatching { Math.addExact(visit.pricePence, it) }.getOrNull() }
         val valid = travelPence != null && depositPence != null && travelPence >= 0 && depositPence >= 0 && total != null && depositPence <= total
         AlertDialog(
@@ -528,7 +528,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     var date by rememberSaveable { mutableStateOf(java.time.LocalDate.now(ZoneId.of("Europe/London")).toString()) }
     var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
-    val pence = remember(price) { price.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+    val pence = remember(price) { price.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.let { runCatching { it.longValueExact() }.getOrNull() } }
     val futureDate = parsed != null && AppointmentRules.validNewStart(parsed, System.currentTimeMillis())
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
