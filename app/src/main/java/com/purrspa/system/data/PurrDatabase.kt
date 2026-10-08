@@ -97,6 +97,16 @@ abstract class PurrDatabase : RoomDatabase() {
     abstract fun visits(): VisitDao
     abstract fun assessments(): AssessmentDao
     abstract fun consentEvents(): ConsentEventDao
+    suspend fun recordConsent(event: ConsentEvent): Boolean = withTransaction {
+        val cat = cats().get(event.catId) ?: return@withTransaction false
+        val photo = event.photoAllowed
+        val social = photo && event.socialAllowed
+        val updated = cats().updateConsents(cat.id, photo, social, event.recordedMillis)
+        if (updated != 1) return@withTransaction false
+        consentEvents().insert(event.copy(socialAllowed = social))
+        true
+    }
+
     suspend fun insertVisitIfFree(item: Visit): Boolean = withTransaction {
         val duration = AppointmentRules.DEFAULT_DURATION_MINUTES * 60_000L
         val endExclusive = Math.addExact(item.startMillis, duration)
