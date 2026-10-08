@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 data class Client(@PrimaryKey val id: String, val name: String, val phone: String, val email: String = "", val address: String = "")
 
 @Entity(tableName = "cats", foreignKeys = [ForeignKey(entity = Client::class, parentColumns = ["id"], childColumns = ["clientId"], onDelete = ForeignKey.RESTRICT)], indices = [Index("clientId")])
-data class Cat(@PrimaryKey val id: String, val clientId: String, val name: String, val breed: String = "", val notes: String = "", val sex: String = "", val dateOfBirth: String = "", val neutered: Boolean = false, val healthNotes: String = "")
+data class Cat(@PrimaryKey val id: String, val clientId: String, val name: String, val breed: String = "", val notes: String = "", val sex: String = "", val dateOfBirth: String = "", val neutered: Boolean = false, val healthNotes: String = "", val photoConsent: Boolean = false, val socialConsent: Boolean = false, val consentUpdatedMillis: Long = 0L)
 
 @Entity(tableName = "visits", foreignKeys = [ForeignKey(entity = Cat::class, parentColumns = ["id"], childColumns = ["catId"], onDelete = ForeignKey.RESTRICT)], indices = [Index("catId"), Index("startMillis")])
 data class Visit(@PrimaryKey val id: String, val catId: String, val startMillis: Long, val service: String, val location: String, val pricePence: Long, val status: String = "SCHEDULED", val notes: String = "", val paymentStatus: String = "UNPAID", val paymentMethod: String = "", val travelFeePence: Long = 0, val depositPaidPence: Long = 0)
@@ -68,7 +68,7 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 5, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 6, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
