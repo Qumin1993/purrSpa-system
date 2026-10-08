@@ -198,6 +198,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                             Text("${cats.firstOrNull { it.id == visit.catId }?.name ?: "Unknown"} • ${visit.service}", style = MaterialTheme.typography.titleMedium)
                             Text("${dateTime(visit.startMillis)} • ${visit.location} • £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)} • ${visit.status}")
+                            val visitOwner = clients.firstOrNull { owner -> owner.id == cats.firstOrNull { it.id == visit.catId }?.clientId }
+                            if (visitOwner != null) {
+                                Text("Owner: ${visitOwner.name}${if (visitOwner.phone.isNotBlank()) " • ${visitOwner.phone}" else ""}", color = MaterialTheme.colorScheme.secondary)
+                            }
                             if (visit.notes.isNotBlank()) Text("Notes: ${visit.notes}")
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
