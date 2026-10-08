@@ -401,7 +401,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     }
                     Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
                     Text("Recorded decisions: ${ConsentHistory.forCat(consentEvents, cat.id).size}")
-                    ConsentHistory.forCat(consentEvents, cat.id).take(3).forEach { event ->
+                    ConsentHistory.forCat(consentEvents, cat.id).forEach { event ->
                         Text("${java.time.Instant.ofEpochMilli(event.recordedMillis).atZone(java.time.ZoneId.of("Europe/London")).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.UK))} • ${event.source.replace("_", " ")} • Photos: ${if (event.photoAllowed) "Yes" else "No"} • Social: ${if (event.socialAllowed) "Yes" else "No"}")
                     }
                     if (cat.consentUpdatedMillis > 0L) Text("Last recorded: ${java.time.Instant.ofEpochMilli(cat.consentUpdatedMillis).atZone(java.time.ZoneId.of("Europe/London")).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.UK))}")
