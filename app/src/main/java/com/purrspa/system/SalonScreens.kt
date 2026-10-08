@@ -409,7 +409,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.updateCatConsents(cat, photoAllowed, socialAllowed)
+                    vm.updateCatConsents(cat, photoAllowed, socialAllowed, consentSource)
                     catConsent = null
                 }) { Text("Save permissions") }
             },
