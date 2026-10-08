@@ -392,6 +392,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         Text("Permission to publish on social media")
                     }
                     Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
+                    Text("Recorded decisions: ${consentEvents.count { it.catId == cat.id }}")
                     if (cat.consentUpdatedMillis > 0L) Text("Last recorded: ${java.time.Instant.ofEpochMilli(cat.consentUpdatedMillis).atZone(java.time.ZoneId.of("Europe/London")).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.UK))}")
                 }
             },
