@@ -90,12 +90,13 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 6, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class], version = 7, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
     abstract fun visits(): VisitDao
     abstract fun assessments(): AssessmentDao
+    abstract fun consentEvents(): ConsentEventDao
     suspend fun insertVisitIfFree(item: Visit): Boolean = withTransaction {
         val duration = AppointmentRules.DEFAULT_DURATION_MINUTES * 60_000L
         val endExclusive = Math.addExact(item.startMillis, duration)
@@ -149,9 +150,16 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE cats ADD COLUMN consentUpdatedMillis INTEGER NOT NULL DEFAULT 0")
             }
         }
+        val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS consent_events (id TEXT NOT NULL PRIMARY KEY, catId TEXT NOT NULL, photoAllowed INTEGER NOT NULL, socialAllowed INTEGER NOT NULL, recordedMillis INTEGER NOT NULL, source TEXT NOT NULL, FOREIGN KEY(catId) REFERENCES cats(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_consent_events_catId ON consent_events(catId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_consent_events_recordedMillis ON consent_events(recordedMillis)")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build().also { instance = it }
         }
     }
 }
