@@ -430,7 +430,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         val travelPence = remember(travel) { travel.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.let { runCatching { it.longValueExact() }.getOrNull() } }
         val depositPence = remember(deposit) { deposit.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.let { runCatching { it.longValueExact() }.getOrNull() } }
         val total = travelPence?.let { runCatching { Math.addExact(visit.pricePence, it) }.getOrNull() }
-        val valid = travelPence != null && depositPence != null && travelPence >= 0 && depositPence >= 0 && total != null && depositPence <= total
+        val valid = travelPence != null && depositPence != null && com.purrspa.system.data.VisitBalance.validCharges(visit.pricePence, travelPence, depositPence)
         AlertDialog(
             onDismissRequest = { editingCharges = null },
             title = { Text("Travel fee and deposit") },
