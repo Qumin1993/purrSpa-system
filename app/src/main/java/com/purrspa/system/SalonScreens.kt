@@ -34,6 +34,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
     val assessments by vm.assessments.collectAsStateWithLifecycle()
+    val consentEvents by vm.consentEvents.collectAsStateWithLifecycle()
     var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var clientHistory by remember { mutableStateOf<Client?>(null) }
