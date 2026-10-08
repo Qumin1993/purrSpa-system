@@ -72,6 +72,12 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+    fun deleteVisitPhoto(photo: VisitPhoto) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val removed = db.visitPhotos().deleteById(photo.id)
+            if (removed > 0) File(getApplication<Application>().filesDir, "visit_photos/${photo.privateFilename}").delete()
+        }
+    }
     fun importVisitPhoto(visitId: String, kind: String, uri: Uri) {
         if (kind !in setOf("BEFORE", "AFTER")) return
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
