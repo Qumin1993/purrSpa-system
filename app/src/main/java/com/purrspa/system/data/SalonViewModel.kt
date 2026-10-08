@@ -1,6 +1,8 @@
 package com.purrspa.system.data
 
 import android.app.Application
+import android.net.Uri
+import java.io.File
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +20,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val assessments = db.assessments().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val visitPhotos = db.visitPhotos().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val ownerIntakes = db.ownerIntakes().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val consentEvents = db.consentEvents().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val visits = db.visits().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -66,6 +69,27 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                 _bookingError.value = "Appointment overlaps an existing booking (estimated 2 hours)."
             } else {
                 _bookingError.value = null
+            }
+        }
+    }
+    fun importVisitPhoto(visitId: String, kind: String, uri: Uri) {
+        if (kind !in setOf("BEFORE", "AFTER")) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val app = getApplication<Application>()
+            val id = UUID.randomUUID().toString()
+            val dir = File(app.filesDir, "visit_photos").apply { mkdirs() }
+            val target = File(dir, "$id.jpg")
+            try {
+                app.contentResolver.openInputStream(uri)?.use { input ->
+                    val bytes = input.readBytes()
+                    if (bytes.isEmpty() || bytes.size > 15_000_000) return@launch
+                    val mime = app.contentResolver.getType(uri)
+                    if (mime !in setOf("image/jpeg", "image/png", "image/webp")) return@launch
+                    target.outputStream().use { it.write(bytes) }
+                } ?: return@launch
+                db.visitPhotos().insert(VisitPhoto(id, visitId, kind, target.name, System.currentTimeMillis()))
+            } catch (_: Exception) {
+                target.delete()
             }
         }
     }
