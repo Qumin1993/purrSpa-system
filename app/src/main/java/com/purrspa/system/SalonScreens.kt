@@ -40,6 +40,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
+    var pendingStatusChange by remember { mutableStateOf<Pair<Visit, String>?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
