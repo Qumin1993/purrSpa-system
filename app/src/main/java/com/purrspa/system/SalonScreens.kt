@@ -575,7 +575,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         AlertDialog(onDismissRequest = { vm.clearBookingError() }, title = { Text("Booking conflict") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { vm.clearBookingError() }) { Text("OK") } })
     }
     assessingVisit?.let { visit ->
-        GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = java.util.UUID.randomUUID().toString(), visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null })
+        GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = visit.id, visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null }, onDraftChange = { vm.saveAssessment(it) })
     }
     pendingStatusChange?.let { (visit, status) ->
         AlertDialog(
@@ -733,9 +733,16 @@ private fun VisitNotesDialog(initial: String, onClose: () -> Unit, onSave: (Stri
 private fun GroomingAssessmentDialog(
     original: GroomingAssessment,
     onClose: () -> Unit,
-    onSave: (GroomingAssessment) -> Unit
+    onSave: (GroomingAssessment) -> Unit,
+    onDraftChange: (GroomingAssessment) -> Unit
 ) {
-    var draft by remember(original.id) { mutableStateOf(original) }
+    var draft by remember(original.visitId) { mutableStateOf(original) }
+    LaunchedEffect(draft) {
+        if (draft != original) {
+            kotlinx.coroutines.delay(750)
+            onDraftChange(draft)
+        }
+    }
     val tasks = listOf("Brushing", "Bathing", "Dryer", "Nail trim", "Paw handling", "Belly", "Tail")
     val scores = listOf(draft.brushing, draft.bathing, draft.drying, draft.nailTrim, draft.paws, draft.belly, draft.tail)
     fun setScore(index: Int, score: Int) {
@@ -749,9 +756,10 @@ private fun GroomingAssessmentDialog(
             else -> draft.copy(tail = score)
         }
     }
-    AlertDialog(onDismissRequest = onClose, title = { Text("Groomer assessment") }, text = {
+    AlertDialog(onDismissRequest = {}, title = { Text("Groomer assessment") }, text = {
         Column(Modifier.heightIn(max = 510.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Rate only observed activities. Not assessed is the default.")
+            Text("Changes autosave after a short pause. Use Save assessment before leaving.", color = MaterialTheme.colorScheme.secondary)
             tasks.forEachIndexed { index, label ->
                 Text(label, style = MaterialTheme.typography.labelLarge)
                 var expanded by remember { mutableStateOf(false) }
