@@ -58,9 +58,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
     }
     fun setVisitCharges(visit: Visit, travelPence: Long, depositPence: Long) {
-        if (travelPence < 0 || depositPence < 0) return
-        val total = runCatching { Math.addExact(visit.pricePence, travelPence) }.getOrNull() ?: return
-        if (depositPence > total) return
+        if (!VisitBalance.validCharges(visit.pricePence, travelPence, depositPence)) return
         viewModelScope.launch { db.visits().updateCharges(visit.id, travelPence, depositPence) }
     }
     fun setVisitPayment(visit: Visit, status: String, method: String) {
