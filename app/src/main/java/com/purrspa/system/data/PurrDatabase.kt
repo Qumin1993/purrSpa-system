@@ -50,6 +50,8 @@ interface CatDao {
     @Query("SELECT * FROM cats ORDER BY name COLLATE NOCASE") fun observe(): Flow<List<Cat>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Cat)
     @Update suspend fun update(item: Cat)
+    @Query("UPDATE cats SET name = :name, breed = :breed, notes = :notes, sex = :sex, dateOfBirth = :dob, neutered = :neutered, healthNotes = :health WHERE id = :id")
+    suspend fun updateProfile(id: String, name: String, breed: String, notes: String, sex: String, dob: String, neutered: Boolean, health: String): Int
     @Query("UPDATE cats SET photoConsent = :photo, socialConsent = :social, consentUpdatedMillis = :updated WHERE id = :id")
     suspend fun updateConsents(id: String, photo: Boolean, social: Boolean, updated: Long): Int
     @Query("SELECT * FROM cats WHERE id = :id LIMIT 1") suspend fun get(id: String): Cat?
