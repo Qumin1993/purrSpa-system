@@ -365,6 +365,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}")
                     if (cat.notes.isNotBlank()) Text("Handling notes: ${cat.notes}")
+                    clients.firstOrNull { it.id == cat.clientId }?.let { owner -> if (owner.phone.isNotBlank()) Text("Owner phone: ${owner.phone}") }
                     if (cat.sex.isNotBlank()) Text("Sex: ${cat.sex}")
                     if (cat.dateOfBirth.isNotBlank()) Text("Date of birth: ${cat.dateOfBirth}")
                     Text("Neutered: ${if (cat.neutered) "Yes" else "No / not confirmed"}")
