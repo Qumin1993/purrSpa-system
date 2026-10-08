@@ -379,7 +379,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             onDismissRequest = { catConsent = null },
             title = { Text("Photo permissions: ${cat.name}") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Record the owner's explicit permission. Both options default to no.")
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Checkbox(checked = photoAllowed, onCheckedChange = {
