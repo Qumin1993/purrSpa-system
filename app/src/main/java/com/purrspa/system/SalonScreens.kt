@@ -209,6 +209,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             }
                             if (visit.notes.isNotBlank()) Text("Private notes saved • Open Edit notes to view", color = MaterialTheme.colorScheme.secondary)
                             Text("Payment: ${visit.paymentStatus.replace("_", " ")}${if (visit.paymentMethod.isNotBlank()) " • ${visit.paymentMethod.replace("_", " ")}" else ""}")
+                            if (visit.travelFeePence > 0 || visit.depositPaidPence > 0) Text("Travel: £${"%.2f".format(Locale.UK, visit.travelFeePence / 100.0)} • Deposit received: £${"%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)}", color = MaterialTheme.colorScheme.secondary)
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
