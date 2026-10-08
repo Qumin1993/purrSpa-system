@@ -369,6 +369,38 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             confirmButton = { TextButton(onClick = { clientHistory = null }) { Text("Close") } }
         )
     }
+    catConsent?.let { cat ->
+        var photoAllowed by remember(cat.id) { mutableStateOf(cat.photoConsent) }
+        var socialAllowed by remember(cat.id) { mutableStateOf(cat.socialConsent) }
+        AlertDialog(
+            onDismissRequest = { catConsent = null },
+            title = { Text("Photo permissions: ${cat.name}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Record the owner's explicit permission. Both options default to no.")
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(checked = photoAllowed, onCheckedChange = {
+                            photoAllowed = it
+                            if (!it) socialAllowed = false
+                        })
+                        Text("Permission to take photos")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(checked = socialAllowed, enabled = photoAllowed, onCheckedChange = { socialAllowed = it })
+                        Text("Permission to publish on social media")
+                    }
+                    Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.updateCatConsents(cat, photoAllowed, socialAllowed)
+                    catConsent = null
+                }) { Text("Save permissions") }
+            },
+            dismissButton = { TextButton(onClick = { catConsent = null }) { Text("Cancel") } }
+        )
+    }
     editingCat?.let { item ->
         EditCatDialog(item, onClose = { editingCat = null }, onSave = { vm.updateCat(it); editingCat = null })
     }
