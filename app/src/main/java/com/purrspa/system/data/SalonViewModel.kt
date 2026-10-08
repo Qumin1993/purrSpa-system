@@ -57,6 +57,11 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (listOf(item.brushing, item.bathing, item.drying, item.nailTrim, item.paws, item.belly, item.tail).any { it !in -1..4 }) return
         viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
     }
+    fun setVisitPayment(visit: Visit, status: String, method: String) {
+        if (status !in setOf("UNPAID", "PAID")) return
+        if (status == "PAID" && method !in setOf("CASH", "CARD", "BANK_TRANSFER", "OTHER")) return
+        viewModelScope.launch { db.visits().updatePayment(visit.id, status, if (status == "PAID") method else "") }
+    }
     fun saveVisitNotes(visit: Visit, notes: String) {
         viewModelScope.launch { db.visits().updateNotes(visit.id, notes.trim()) }
     }
