@@ -23,9 +23,9 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (name.isBlank()) return
         viewModelScope.launch { db.clients().insert(Client(UUID.randomUUID().toString(), name.trim(), phone.trim(), email.trim(), address.trim())) }
     }
-    fun addCat(clientId: String, name: String, breed: String, notes: String) {
+    fun addCat(clientId: String, name: String, breed: String, notes: String, sex: String = "", dateOfBirth: String = "", neutered: Boolean = false, healthNotes: String = "") {
         if (clientId.isBlank() || name.isBlank()) return
-        viewModelScope.launch { db.cats().insert(Cat(UUID.randomUUID().toString(), clientId, name.trim(), breed.trim(), notes.trim())) }
+        viewModelScope.launch { db.cats().insert(Cat(UUID.randomUUID().toString(), clientId, name.trim(), breed.trim(), notes.trim(), sex.trim(), dateOfBirth.trim(), neutered, healthNotes.trim())) }
     }
     fun updateClient(item: Client) {
         if (item.name.isBlank()) return
