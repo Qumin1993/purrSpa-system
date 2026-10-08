@@ -372,6 +372,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         )
                         Text("Include private groomer visit notes")
                     }
+                    Text("The report will also include up to 12 before/after photos from this visit.")
                     Text("Confirm the recipient before sending.")
                 }
             },
@@ -379,7 +380,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
                     reportToShare = null
                     if (reportCat != null && reportOwner != null) {
-                        runCatching { VisitPdf.share(context, if (includePrivateNotes) visit else visit.copy(notes = ""), reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }) }
+                        runCatching { VisitPdf.share(context, if (includePrivateNotes) visit else visit.copy(notes = ""), reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }, visitPhotos.filter { it.visitId == visit.id }) }
                             .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
                     }
                 }) { Text("Continue to share") }
