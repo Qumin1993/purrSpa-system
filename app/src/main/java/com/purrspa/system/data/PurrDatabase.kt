@@ -30,6 +30,24 @@ data class GroomingAssessment(
     val updatedMillis: Long = System.currentTimeMillis()
 )
 
+@Entity(tableName = "consent_events", foreignKeys = [ForeignKey(entity = Cat::class, parentColumns = ["id"], childColumns = ["catId"], onDelete = ForeignKey.CASCADE)], indices = [Index("catId"), Index("recordedMillis")])
+data class ConsentEvent(
+    @PrimaryKey val id: String,
+    val catId: String,
+    val photoAllowed: Boolean,
+    val socialAllowed: Boolean,
+    val recordedMillis: Long,
+    val source: String = "OWNER_VERBAL"
+)
+
+@Dao
+interface ConsentEventDao {
+    @Query("SELECT * FROM consent_events ORDER BY recordedMillis DESC")
+    fun observe(): Flow<List<ConsentEvent>>
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(event: ConsentEvent)
+}
+
 @Dao
 interface AssessmentDao {
     @Query("SELECT * FROM grooming_assessments ORDER BY updatedMillis DESC")
