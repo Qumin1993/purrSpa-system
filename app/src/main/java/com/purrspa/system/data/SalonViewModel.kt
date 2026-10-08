@@ -16,6 +16,9 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
     private val _bookingError = MutableStateFlow<String?>(null)
     val bookingError = _bookingError.asStateFlow()
+    private val _photoMessage = MutableStateFlow<String?>(null)
+    val photoMessage = _photoMessage.asStateFlow()
+    fun clearPhotoMessage() { _photoMessage.value = null }
     fun clearBookingError() { _bookingError.value = null }
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -84,18 +87,58 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
             val app = getApplication<Application>()
             val id = UUID.randomUUID().toString()
             val dir = File(app.filesDir, "visit_photos").apply { mkdirs() }
-            val target = File(dir, "$id.jpg")
+            var target: File? = null
             try {
-                app.contentResolver.openInputStream(uri)?.use { input ->
-                    val bytes = input.readBytes()
-                    if (bytes.isEmpty() || bytes.size > 15_000_000) return@launch
-                    val mime = app.contentResolver.getType(uri)
-                    if (mime !in setOf("image/jpeg", "image/png", "image/webp")) return@launch
-                    target.outputStream().use { it.write(bytes) }
-                } ?: return@launch
-                db.visitPhotos().insert(VisitPhoto(id, visitId, kind, target.name, System.currentTimeMillis()))
+                val mime = app.contentResolver.getType(uri)
+                val extension = when (mime) {
+                    "image/jpeg" -> "jpg"
+                    "image/png" -> "png"
+                    "image/webp" -> "webp"
+                    else -> {
+                        _photoMessage.value = "Choose a JPEG, PNG or WebP image."
+                        return@launch
+                    }
+                }
+                val file = File(dir, "$id.$extension")
+                target = file
+                val stream = app.contentResolver.openInputStream(uri)
+                if (stream == null) {
+                    _photoMessage.value = "Cannot open selected photo."
+                    return@launch
+                }
+                stream.use { input ->
+                    file.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var total = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            if (total > 15_000_000) {
+                                _photoMessage.value = "Photo exceeds the 15 MB limit."
+                                return@launch
+                            }
+                            output.write(buffer, 0, count)
+                        }
+                        if (total == 0L) {
+                            _photoMessage.value = "Selected photo is empty."
+                            return@launch
+                        }
+                    }
+                }
+                val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                    _photoMessage.value = "Selected file is not a readable image."
+                    return@launch
+                }
+                db.visitPhotos().insert(VisitPhoto(id, visitId, kind, file.name, System.currentTimeMillis()))
+                target = null
+                _photoMessage.value = "${kind.lowercase().replaceFirstChar { it.uppercase() }} photo added."
             } catch (_: Exception) {
-                target.delete()
+                _photoMessage.value = "Could not import photo. Please try again."
+            } finally {
+                target?.delete()
             }
         }
     }
