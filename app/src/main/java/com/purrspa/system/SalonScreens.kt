@@ -392,6 +392,13 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         Checkbox(checked = socialAllowed, enabled = photoAllowed, onCheckedChange = { socialAllowed = it })
                         Text("Permission to publish on social media")
                     }
+                    Text("How was the decision recorded?")
+                    listOf("STAFF_RECORDED", "OWNER_VERBAL", "OWNER_WRITTEN").forEach { option ->
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            RadioButton(selected = consentSource == option, onClick = { consentSource = option })
+                            Text(option.replace("_", " "))
+                        }
+                    }
                     Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
                     Text("Recorded decisions: ${consentEvents.count { it.catId == cat.id }}")
                     consentEvents.filter { it.catId == cat.id }.sortedByDescending { it.recordedMillis }.take(3).forEach { event ->
