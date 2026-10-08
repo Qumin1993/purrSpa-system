@@ -104,6 +104,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
+                        Text("Photos: ${if (cat.photoConsent) "Allowed" else "Not allowed"} • Social: ${if (cat.socialConsent) "Allowed" else "Not allowed"}", color = MaterialTheme.colorScheme.secondary)
                         TextButton(onClick = { catConsent = cat }) { Text("Photo consent") }
                     }
                 }
