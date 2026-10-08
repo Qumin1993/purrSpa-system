@@ -37,6 +37,13 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (item.name.isBlank()) return
         viewModelScope.launch { db.cats().updateProfile(item.id, item.name.trim(), item.breed.trim(), item.notes.trim(), item.sex, item.dateOfBirth, item.neutered, item.healthNotes.trim()) }
     }
+    fun updateCatHandlingTags(catId: String, tags: Set<String>) {
+        val allowed = setOf("Spicy", "Senior", "Fleas", "Mats", "Sensitive belly")
+        if (catId.isBlank() || !allowed.containsAll(tags)) return
+        viewModelScope.launch {
+            db.cats().updateHandlingTags(catId, allowed.filter { it in tags }.joinToString("|"))
+        }
+    }
     fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean, source: String) {
         if (source !in setOf("OWNER_VERBAL", "OWNER_WRITTEN", "STAFF_RECORDED")) return
         val safeSocial = ConsentRules.effectiveSocialConsent(photoAllowed, socialAllowed)
