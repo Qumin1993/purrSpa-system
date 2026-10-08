@@ -1,6 +1,8 @@
 package com.purrspa.system
 
 import androidx.compose.foundation.layout.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +38,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val assessments by vm.assessments.collectAsStateWithLifecycle()
     val consentEvents by vm.consentEvents.collectAsStateWithLifecycle()
     val ownerIntakes by vm.ownerIntakes.collectAsStateWithLifecycle()
+    val visitPhotos by vm.visitPhotos.collectAsStateWithLifecycle()
     var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var clientHistory by remember { mutableStateOf<Client?>(null) }
@@ -51,6 +54,12 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
+    var photoTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val target = photoTarget
+        if (uri != null && target != null) vm.importVisitPhoto(target.first, target.second, uri)
+        photoTarget = null
+    }
     var clientSearch by rememberSaveable { mutableStateOf("") }
     var catSearch by rememberSaveable { mutableStateOf("") }
     var visitSearch by rememberSaveable { mutableStateOf("") }
@@ -240,6 +249,15 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
                                 TextButton(onClick = { editingCharges = visit }) { Text("Fees / deposit") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
+                                TextButton(onClick = {
+                                    photoTarget = visit.id to "BEFORE"
+                                    photoPicker.launch("image/*")
+                                }) { Text("Add before photo") }
+                                TextButton(onClick = {
+                                    photoTarget = visit.id to "AFTER"
+                                    photoPicker.launch("image/*")
+                                }) { Text("Add after photo") }
+                                Text("Photos: ${visitPhotos.count { it.visitId == visit.id && it.kind == "BEFORE" }} before / ${visitPhotos.count { it.visitId == visit.id && it.kind == "AFTER" }} after")
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
                                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
