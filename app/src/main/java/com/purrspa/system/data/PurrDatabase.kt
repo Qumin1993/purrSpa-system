@@ -37,7 +37,7 @@ data class ConsentEvent(
     val photoAllowed: Boolean,
     val socialAllowed: Boolean,
     val recordedMillis: Long,
-    val source: String = "OWNER_VERBAL"
+    val source: String = "STAFF_RECORDED"
 )
 
 @Dao
