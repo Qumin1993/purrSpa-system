@@ -12,6 +12,10 @@ object VisitBalance {
             .getOrNull()?.coerceAtLeast(0L)
     }
 
+    fun paymentStatusAllowed(visitStatus: String, nextPaymentStatus: String): Boolean =
+        nextPaymentStatus == "UNPAID" ||
+            (nextPaymentStatus == "PAID" && visitStatus !in setOf("CANCELLED", "NO_SHOW"))
+
     fun validCharges(servicePence: Long, travelPence: Long, depositPence: Long): Boolean {
         if (servicePence < 0 || travelPence < 0 || depositPence < 0) return false
         val total = runCatching { Math.addExact(servicePence, travelPence) }.getOrNull() ?: return false
