@@ -445,6 +445,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
             if (parsed == null) Text("Enter a valid UK date and time. Clock-change times may be unavailable or ambiguous.", color = MaterialTheme.colorScheme.error)
             else if (!futureDate) Text("Choose a future appointment time.", color = MaterialTheme.colorScheme.error)
             Field(service,{service=it},"Service"); Field(location,{location=it},"Salon or mobile"); Field(price,{price=it},"Price GBP")
+            if (pence == null || pence < 0) Text("Enter a valid GBP amount (0 or more, up to 2 decimal places).", color = MaterialTheme.colorScheme.error)
         }
     },confirmButton={TextButton(enabled=futureDate && pence!=null && pence>=0 && service.isNotBlank(),onClick={onSave(catId,parsed!!,service,location,pence!!)}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
 }
