@@ -66,7 +66,7 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 4, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class], version = 5, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
@@ -112,9 +112,15 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE visits ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT ''")
             }
         }
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE visits ADD COLUMN travelFeePence INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE visits ADD COLUMN depositPaidPence INTEGER NOT NULL DEFAULT 0")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { instance = it }
         }
     }
 }
