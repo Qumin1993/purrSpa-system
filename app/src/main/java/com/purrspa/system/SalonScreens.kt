@@ -365,6 +365,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}")
                     if (cat.notes.isNotBlank()) Text("Handling notes: ${cat.notes}")
+                    if (cat.sex.isNotBlank()) Text("Sex: ${cat.sex}")
+                    if (cat.dateOfBirth.isNotBlank()) Text("Date of birth: ${cat.dateOfBirth}")
+                    Text("Neutered: ${if (cat.neutered) "Yes" else "No / not recorded"}")
+                    if (cat.healthNotes.isNotBlank()) Text("Owner-reported health / medication notes: ${cat.healthNotes}")
                     Text("${history.size} recorded visits", style = MaterialTheme.typography.titleMedium)
                     val completed = history.filter { it.status == "COMPLETED" }
                     Text("${completed.size} completed • Service value: £${"%.2f".format(Locale.UK, completed.sumOf { it.pricePence } / 100.0)}")
