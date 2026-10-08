@@ -18,6 +18,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val assessments = db.assessments().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val consentEvents = db.consentEvents().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val visits = db.visits().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun addClient(name: String, phone: String, email: String, address: String) {
         if (name.isBlank()) return
@@ -38,7 +39,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
         val safeSocial = ConsentRules.effectiveSocialConsent(photoAllowed, socialAllowed)
         viewModelScope.launch {
-            db.cats().updateConsents(cat.id, photoAllowed, safeSocial, System.currentTimeMillis())
+            db.recordConsent(ConsentEvent(UUID.randomUUID().toString(), cat.id, photoAllowed, safeSocial, System.currentTimeMillis()))
         }
     }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
