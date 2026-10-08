@@ -40,6 +40,33 @@ data class ConsentEvent(
     val source: String = "STAFF_RECORDED"
 )
 
+/** Owner-reported information, kept separate from observed grooming assessments. */
+@Entity(tableName = "owner_intakes", foreignKeys = [ForeignKey(entity = Cat::class, parentColumns = ["id"], childColumns = ["catId"], onDelete = ForeignKey.CASCADE)], indices = [Index(value = ["catId"], unique = true)])
+data class OwnerIntake(
+    @PrimaryKey val id: String,
+    val catId: String,
+    val healthConditions: String = "",
+    val medications: String = "",
+    val allergies: String = "",
+    val previousGrooming: String = "",
+    val behaviourTriggers: String = "",
+    val handlingAdvice: String = "",
+    val brushingTolerance: String = "UNKNOWN",
+    val bathingTolerance: String = "UNKNOWN",
+    val dryerTolerance: String = "UNKNOWN",
+    val nailsTolerance: String = "UNKNOWN",
+    val source: String = "STAFF_RECORDED",
+    val updatedMillis: Long = 0L
+)
+
+@Dao
+interface OwnerIntakeDao {
+    @Query("SELECT * FROM owner_intakes ORDER BY updatedMillis DESC")
+    fun observe(): Flow<List<OwnerIntake>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(item: OwnerIntake)
+}
+
 @Dao
 interface ConsentEventDao {
     @Query("SELECT * FROM consent_events ORDER BY recordedMillis DESC")
@@ -90,12 +117,13 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class], version = 7, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class, OwnerIntake::class], version = 8, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
     abstract fun visits(): VisitDao
     abstract fun assessments(): AssessmentDao
+    abstract fun ownerIntakes(): OwnerIntakeDao
     abstract fun consentEvents(): ConsentEventDao
     suspend fun recordConsent(event: ConsentEvent): Boolean = withTransaction {
         val cat = cats().get(event.catId) ?: return@withTransaction false
@@ -167,9 +195,24 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_consent_events_recordedMillis ON consent_events(recordedMillis)")
             }
         }
+        val MIGRATION_7_8 = object : androidx.room.migration.Migration(7, 8) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("""CREATE TABLE IF NOT EXISTS owner_intakes (
+                    id TEXT NOT NULL PRIMARY KEY, catId TEXT NOT NULL,
+                    healthConditions TEXT NOT NULL, medications TEXT NOT NULL,
+                    allergies TEXT NOT NULL, previousGrooming TEXT NOT NULL,
+                    behaviourTriggers TEXT NOT NULL, handlingAdvice TEXT NOT NULL,
+                    brushingTolerance TEXT NOT NULL, bathingTolerance TEXT NOT NULL,
+                    dryerTolerance TEXT NOT NULL, nailsTolerance TEXT NOT NULL,
+                    source TEXT NOT NULL, updatedMillis INTEGER NOT NULL,
+                    FOREIGN KEY(catId) REFERENCES cats(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                )""".trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_owner_intakes_catId ON owner_intakes(catId)")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build().also { instance = it }
         }
     }
 }
