@@ -462,6 +462,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Text("Deposit recorded: £${"%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)}")
                     Text("Balance before final payment: £${"%.2f".format(Locale.UK, (fullAmount - visit.depositPaidPence) / 100.0)}")
                     Text("Record whether this visit has been paid in full.")
+                    if (visit.status in setOf("CANCELLED", "NO_SHOW")) Text("Cancelled and no-show visits cannot be marked paid in this version.", color = MaterialTheme.colorScheme.error)
                     listOf("CASH", "CARD", "BANK_TRANSFER", "OTHER").forEach { option ->
                         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                             RadioButton(selected = method == option, onClick = { method = option })
@@ -471,7 +472,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { vm.setVisitPayment(visit, "PAID", method); editingPayment = null }) { Text("Mark paid") }
+                TextButton(enabled = visit.status !in setOf("CANCELLED", "NO_SHOW"), onClick = { vm.setVisitPayment(visit, "PAID", method); editingPayment = null }) { Text("Mark paid") }
             },
             dismissButton = {
                 Row {
