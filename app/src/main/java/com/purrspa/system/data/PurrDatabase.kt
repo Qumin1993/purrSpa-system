@@ -56,7 +56,8 @@ data class OwnerIntake(
     val dryerTolerance: String = "UNKNOWN",
     val nailsTolerance: String = "UNKNOWN",
     val source: String = "STAFF_RECORDED",
-    val updatedMillis: Long = 0L
+    val updatedMillis: Long = 0L,
+    val isDraft: Boolean = true
 )
 
 @Dao
@@ -119,7 +120,7 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class, OwnerIntake::class], version = 9, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class, OwnerIntake::class], version = 10, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
@@ -217,9 +218,14 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE cats ADD COLUMN handlingTags TEXT NOT NULL DEFAULT ''")
             }
         }
+        val MIGRATION_9_10 = object : androidx.room.migration.Migration(9, 10) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE owner_intakes ADD COLUMN isDraft INTEGER NOT NULL DEFAULT 0")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10).build().also { instance = it }
         }
     }
 }
