@@ -59,7 +59,7 @@ interface VisitDao {
     @Update suspend fun update(item: Visit)
     @Query("UPDATE visits SET paymentStatus = :status, paymentMethod = :method WHERE id = :id AND (:status != 'PAID' OR status NOT IN ('CANCELLED', 'NO_SHOW'))")
     suspend fun updatePayment(id: String, status: String, method: String): Int
-    @Query("UPDATE visits SET travelFeePence = :travel, depositPaidPence = :deposit WHERE id = :id")
+    @Query("UPDATE visits SET travelFeePence = :travel, depositPaidPence = :deposit WHERE id = :id AND :travel >= 0 AND :deposit >= 0 AND :deposit <= pricePence + :travel")
     suspend fun updateCharges(id: String, travel: Long, deposit: Long): Int
     @Query("UPDATE visits SET notes = :notes WHERE id = :id")
     suspend fun updateNotes(id: String, notes: String): Int
