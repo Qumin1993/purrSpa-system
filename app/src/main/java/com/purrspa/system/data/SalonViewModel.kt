@@ -84,6 +84,11 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun importVisitPhoto(visitId: String, kind: String, uri: Uri) {
         if (kind !in setOf("BEFORE", "AFTER")) return
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val visit = db.visits().get(visitId)
+            if (visit == null || db.cats().get(visit.catId)?.photoConsent != true) {
+                _photoMessage.value = "Owner photo consent is required before adding photos."
+                return@launch
+            }
             val app = getApplication<Application>()
             val id = UUID.randomUUID().toString()
             val dir = File(app.filesDir, "visit_photos").apply { mkdirs() }
@@ -130,6 +135,10 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                 android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
                 if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
                     _photoMessage.value = "Selected file is not a readable image."
+                    return@launch
+                }
+                if (db.cats().get(visit.catId)?.photoConsent != true) {
+                    _photoMessage.value = "Photo consent was withdrawn. Import cancelled."
                     return@launch
                 }
                 db.visitPhotos().insert(VisitPhoto(id, visitId, kind, file.name, System.currentTimeMillis()))
