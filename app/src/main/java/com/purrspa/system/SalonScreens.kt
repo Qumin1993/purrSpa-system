@@ -552,6 +552,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         }
                     }
                     Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
+                    if (cat.photoConsent && !photoAllowed) Text("Withdrawing photo permission blocks new photos and PDF attachments. Existing private photos remain until you delete them from each visit gallery.", color = MaterialTheme.colorScheme.error)
                     Text("Recorded decisions: ${ConsentHistory.forCat(consentEvents, cat.id).size}")
                     ConsentHistory.forCat(consentEvents, cat.id).forEach { event ->
                         Text("${java.time.Instant.ofEpochMilli(event.recordedMillis).atZone(java.time.ZoneId.of("Europe/London")).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.UK))} • ${event.source.replace("_", " ")} • Photos: ${if (event.photoAllowed) "Yes" else "No"} • Social: ${if (event.socialAllowed) "Yes" else "No"}")
@@ -610,6 +611,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             title = { Text("Visit photos") },
             text = {
                 Column(Modifier.heightIn(max = 540.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val galleryCat = cats.firstOrNull { it.id == visit.catId }
+                    if (galleryCat?.photoConsent != true) Text("Photo consent is not active. Existing photos are retained privately for review or deletion, but excluded from client reports.", color = MaterialTheme.colorScheme.error)
                     listOf("BEFORE", "AFTER").forEach { kind ->
                         Text(kind.lowercase().replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleMedium)
                         val photos = visitPhotos.filter { it.visitId == visit.id && it.kind == kind }
