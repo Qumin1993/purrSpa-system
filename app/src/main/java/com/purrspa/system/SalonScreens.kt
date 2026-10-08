@@ -34,6 +34,10 @@ import java.util.Locale
 fun SalonScreen(page: String, vm: SalonViewModel) {
     val context = LocalContext.current
     val bookingError by vm.bookingError.collectAsStateWithLifecycle()
+    val photoMessage by vm.photoMessage.collectAsStateWithLifecycle()
+    LaunchedEffect(photoMessage) {
+        photoMessage?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show(); vm.clearPhotoMessage() }
+    }
     val clients by vm.clients.collectAsStateWithLifecycle()
     val cats by vm.cats.collectAsStateWithLifecycle()
     val visits by vm.visits.collectAsStateWithLifecycle()
