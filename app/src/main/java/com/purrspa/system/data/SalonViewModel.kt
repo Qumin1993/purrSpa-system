@@ -66,6 +66,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun setVisitPayment(visit: Visit, status: String, method: String) {
         if (status !in setOf("UNPAID", "PAID")) return
         if (status == "PAID" && method !in setOf("CASH", "CARD", "BANK_TRANSFER", "OTHER")) return
+        if (status == "PAID" && visit.status in setOf("CANCELLED", "NO_SHOW")) return
         viewModelScope.launch { db.visits().updatePayment(visit.id, status, if (status == "PAID") method else "") }
     }
     fun saveVisitNotes(visit: Visit, notes: String) {
