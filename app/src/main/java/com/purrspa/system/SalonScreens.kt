@@ -104,6 +104,21 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Text(cat.name, style = MaterialTheme.typography.titleMedium)
                             Text("${cat.breed.ifBlank { "Breed not specified" }} • Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}", color = MaterialTheme.colorScheme.secondary)
                             if (cat.sex.isNotBlank() || cat.dateOfBirth.isNotBlank()) Text(listOf(cat.sex, cat.dateOfBirth).filter { it.isNotBlank() }.joinToString(" • "), color = MaterialTheme.colorScheme.secondary)
+                            val ownerIntake = ownerIntakes.firstOrNull { it.catId == cat.id }
+                            val catVisits = visits.filter { it.catId == cat.id }.sortedByDescending { it.startMillis }
+                            val recentAssessment = catVisits.firstNotNullOfOrNull { visit -> assessments.firstOrNull { it.visitId == visit.id } }
+                            val flags = buildList {
+                                val combined = listOf(cat.notes, cat.healthNotes, ownerIntake?.healthConditions.orEmpty(), ownerIntake?.behaviourTriggers.orEmpty(), recentAssessment?.coatCondition.orEmpty()).joinToString(" ").lowercase()
+                                if ("aggress" in combined || "spicy" in combined || "bite" in combined) add("Spicy")
+                                if ("senior" in combined || "elderly" in combined) add("Senior")
+                                if ("flea" in combined) add("Fleas")
+                                if ("mat" in combined || "knot" in combined) add("Mats")
+                                if (ownerIntake?.handlingAdvice?.contains("belly", ignoreCase = true) == true || recentAssessment?.belly?.let { it >= 3 } == true) add("Sensitive belly")
+                            }
+                            if (flags.isNotEmpty()) Text(flags.joinToString("  •  "), color = MaterialTheme.colorScheme.error)
+                            val nextAdvice = recentAssessment?.recommendations?.takeIf { it.isNotBlank() } ?: ownerIntake?.handlingAdvice?.takeIf { it.isNotBlank() }
+                            if (nextAdvice != null) Text("Next visit: $nextAdvice", color = MaterialTheme.colorScheme.secondary)
+
                         }
                         TextButton(onClick = { intakeCat = cat }) { Text("Owner intake") }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
