@@ -40,6 +40,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
+    var editingPayment by remember { mutableStateOf<Visit?>(null) }
     var pendingStatusChange by remember { mutableStateOf<Pair<Visit, String>?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
@@ -206,8 +207,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 Text("Owner: ${visitOwner.name}${if (visitOwner.phone.isNotBlank()) " • ${visitOwner.phone}" else ""}", color = MaterialTheme.colorScheme.secondary)
                             }
                             if (visit.notes.isNotBlank()) Text("Private notes saved • Open Edit notes to view", color = MaterialTheme.colorScheme.secondary)
+                            Text("Payment: ${visit.paymentStatus.replace("_", " ")}${if (visit.paymentMethod.isNotBlank()) " • ${visit.paymentMethod.replace("_", " ")}" else ""}")
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
+                                TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
@@ -407,6 +410,34 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             },
             dismissButton = {
                 TextButton(onClick = { pendingStatusChange = null }) { Text("Keep booking") }
+            }
+        )
+    }
+    editingPayment?.let { visit ->
+        var method by remember(visit.id) { mutableStateOf(visit.paymentMethod.ifBlank { "CASH" }) }
+        AlertDialog(
+            onDismissRequest = { editingPayment = null },
+            title = { Text("Visit payment") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Amount: £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)}")
+                    Text("Record whether this visit has been paid in full.")
+                    listOf("CASH", "CARD", "BANK_TRANSFER", "OTHER").forEach { option ->
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            RadioButton(selected = method == option, onClick = { method = option })
+                            Text(option.replace("_", " "))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { vm.setVisitPayment(visit, "PAID", method); editingPayment = null }) { Text("Mark paid") }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { vm.setVisitPayment(visit, "UNPAID", ""); editingPayment = null }) { Text("Mark unpaid") }
+                    TextButton(onClick = { editingPayment = null }) { Text("Close") }
+                }
             }
         )
     }
