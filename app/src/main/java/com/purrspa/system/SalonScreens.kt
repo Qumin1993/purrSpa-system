@@ -202,7 +202,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             if (visitOwner != null) {
                                 Text("Owner: ${visitOwner.name}${if (visitOwner.phone.isNotBlank()) " • ${visitOwner.phone}" else ""}", color = MaterialTheme.colorScheme.secondary)
                             }
-                            if (visit.notes.isNotBlank()) Text("Notes: ${visit.notes}")
+                            if (visit.notes.isNotBlank()) Text("Private notes saved", color = MaterialTheme.colorScheme.secondary)
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
