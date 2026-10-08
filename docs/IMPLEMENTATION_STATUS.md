@@ -26,6 +26,8 @@
 
 - Consent events now include a staff-selected recording source (staff recorded, owner verbal, owner written) and show dated recent history. This is an operator statement, not an owner signature or independent evidence. Earlier entries may have the historical default OWNER_VERBAL.
 
+- Consent history is now fully listed in a scrollable cat dialog and ordered deterministically per cat. Added unexecuted unit tests for filtering, ordering and missing history. Large histories currently load into memory; pagination is future work.
+
 ## Known blockers and remaining work
 1. Gradle wrapper JAR/scripts missing. Run Android Studio Gradle sync with local Gradle; generate wrapper and commit it.
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
