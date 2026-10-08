@@ -36,7 +36,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { db.cats().updateProfile(item.id, item.name.trim(), item.breed.trim(), item.notes.trim(), item.sex, item.dateOfBirth, item.neutered, item.healthNotes.trim()) }
     }
     fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
-        val safeSocial = photoAllowed && socialAllowed
+        val safeSocial = ConsentRules.effectiveSocialConsent(photoAllowed, socialAllowed)
         viewModelScope.launch {
             db.cats().updateConsents(cat.id, photoAllowed, safeSocial, System.currentTimeMillis())
         }
