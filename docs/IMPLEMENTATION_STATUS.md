@@ -20,6 +20,8 @@
 
 - Added VisitBalance unit tests for deposit arithmetic, full-payment flags, overflow, and invalid payment transitions. Tests have NOT been run on Android/Gradle yet.
 
+- Room v6 adds default-denied cat photo/social permissions, a recorded change timestamp and an in-app consent editor. Consent updates use targeted SQL to avoid overwriting unrelated profile fields. This is NOT an auditable consent history or proof of owner authorization.
+
 ## Known blockers and remaining work
 1. Gradle wrapper JAR/scripts missing. Run Android Studio Gradle sync with local Gradle; generate wrapper and commit it.
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
