@@ -257,15 +257,17 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
                                 TextButton(onClick = { editingCharges = visit }) { Text("Fees / deposit") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
-                                TextButton(onClick = {
+                                val photoCat = cats.firstOrNull { it.id == visit.catId }
+                                TextButton(enabled = photoCat?.photoConsent == true, onClick = {
                                     photoTarget = visit.id to "BEFORE"
                                     photoPicker.launch("image/*")
                                 }) { Text("Add before photo") }
-                                TextButton(onClick = {
+                                TextButton(enabled = photoCat?.photoConsent == true, onClick = {
                                     photoTarget = visit.id to "AFTER"
                                     photoPicker.launch("image/*")
                                 }) { Text("Add after photo") }
                                 TextButton(onClick = { galleryVisit = visit }) { Text("Gallery (${visitPhotos.count { it.visitId == visit.id }})") }
+                                if (photoCat?.photoConsent != true) Text("Owner photo consent required to add photos.", color = MaterialTheme.colorScheme.secondary)
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
                                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
@@ -376,7 +378,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         )
                         Text("Include private groomer visit notes")
                     }
-                    Text("The report will also include up to 12 before/after photos from this visit.")
+                    val allowedPhotoCount = if (reportCat?.photoConsent == true) visitPhotos.count { it.visitId == visit.id } else 0
+                    Text(if (allowedPhotoCount > 0) "The report will include up to 12 before/after photos." else "No photos will be attached without current owner photo consent.")
                     Text("Confirm the recipient before sending.")
                 }
             },
@@ -384,7 +387,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
                     reportToShare = null
                     if (reportCat != null && reportOwner != null) {
-                        runCatching { VisitPdf.share(context, if (includePrivateNotes) visit else visit.copy(notes = ""), reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }, visitPhotos.filter { it.visitId == visit.id }) }
+                        runCatching { VisitPdf.share(context, if (includePrivateNotes) visit else visit.copy(notes = ""), reportCat, reportOwner, assessments.firstOrNull { it.visitId == visit.id }, visitPhotos.filter { it.visitId == visit.id && reportCat.photoConsent }) }
                             .onFailure { Toast.makeText(context, "Could not share report", Toast.LENGTH_LONG).show() }
                     }
                 }) { Text("Continue to share") }
