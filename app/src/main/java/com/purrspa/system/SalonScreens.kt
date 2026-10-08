@@ -430,13 +430,27 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         var bathing by rememberSaveable(cat.id) { mutableStateOf(saved?.bathingTolerance ?: "UNKNOWN") }
         var dryer by rememberSaveable(cat.id) { mutableStateOf(saved?.dryerTolerance ?: "UNKNOWN") }
         var nails by rememberSaveable(cat.id) { mutableStateOf(saved?.nailsTolerance ?: "UNKNOWN") }
+        var initialized by remember(cat.id) { mutableStateOf(false) }
+        LaunchedEffect(cat.id, saved?.id) { initialized = true }
+        LaunchedEffect(health, meds, allergies, previous, triggers, advice, brushing, bathing, dryer, nails, initialized) {
+            if (initialized) {
+                kotlinx.coroutines.delay(750)
+                vm.saveOwnerIntake(OwnerIntake(
+                    id = saved?.id ?: cat.id, catId = cat.id,
+                    healthConditions = health.trim(), medications = meds.trim(), allergies = allergies.trim(),
+                    previousGrooming = previous.trim(), behaviourTriggers = triggers.trim(), handlingAdvice = advice.trim(),
+                    brushingTolerance = brushing, bathingTolerance = bathing, dryerTolerance = dryer, nailsTolerance = nails,
+                    isDraft = true
+                ))
+            }
+        }
         AlertDialog(
             onDismissRequest = { },
             title = { Text("Owner intake • ${cat.name}") },
             text = {
                 Column(Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Owner-reported information. Groomer observations are recorded separately.")
-                    Text("Draft fields stay on screen until saved. Save intake before leaving this form.", color = MaterialTheme.colorScheme.secondary)
+                    Text("Changes are saved automatically as a draft. Tap Complete intake when finished.", color = MaterialTheme.colorScheme.secondary)
                     OutlinedTextField(health, { health = it }, label = { Text("Health conditions") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(meds, { meds = it }, label = { Text("Medications") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(allergies, { allergies = it }, label = { Text("Allergies / sensitivities") }, modifier = Modifier.fillMaxWidth())
@@ -462,13 +476,14 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             },
             confirmButton = { TextButton(onClick = {
                 vm.saveOwnerIntake(OwnerIntake(
-                    id = saved?.id ?: java.util.UUID.randomUUID().toString(), catId = cat.id,
+                    id = saved?.id ?: cat.id, catId = cat.id,
                     healthConditions = health.trim(), medications = meds.trim(), allergies = allergies.trim(),
                     previousGrooming = previous.trim(), behaviourTriggers = triggers.trim(), handlingAdvice = advice.trim(),
-                    brushingTolerance = brushing, bathingTolerance = bathing, dryerTolerance = dryer, nailsTolerance = nails
+                    brushingTolerance = brushing, bathingTolerance = bathing, dryerTolerance = dryer, nailsTolerance = nails,
+                    isDraft = false
                 ))
                 intakeCat = null
-            }) { Text("Save intake") } },
+            }) { Text("Complete intake") } },
             dismissButton = { TextButton(onClick = { intakeCat = null }) { Text("Cancel") } }
         )
     }
