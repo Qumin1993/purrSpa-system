@@ -35,6 +35,16 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (item.name.isBlank()) return
         viewModelScope.launch { db.cats().update(item) }
     }
+    fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
+        val safeSocial = photoAllowed && socialAllowed
+        viewModelScope.launch {
+            db.cats().update(cat.copy(
+                photoConsent = photoAllowed,
+                socialConsent = safeSocial,
+                consentUpdatedMillis = System.currentTimeMillis()
+            ))
+        }
+    }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
         if (catId.isBlank() || service.isBlank() || pricePence < 0) return
         if (!AppointmentRules.validNewStart(startMillis, System.currentTimeMillis())) {
