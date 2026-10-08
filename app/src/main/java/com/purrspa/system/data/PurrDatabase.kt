@@ -125,6 +125,7 @@ interface CatDao {
 }
 @Dao
 interface VisitDao {
+    @Query("SELECT * FROM visits WHERE id = :id LIMIT 1") suspend fun get(id: String): Visit?
     @Query("SELECT * FROM visits ORDER BY startMillis DESC") fun observe(): Flow<List<Visit>>
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: Visit)
     @Update suspend fun update(item: Visit)
