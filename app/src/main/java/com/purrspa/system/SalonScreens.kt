@@ -376,22 +376,23 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     }
     intakeCat?.let { cat ->
         val saved = ownerIntakes.firstOrNull { it.catId == cat.id }
-        var health by remember(cat.id, saved?.id) { mutableStateOf(saved?.healthConditions.orEmpty()) }
-        var meds by remember(cat.id, saved?.id) { mutableStateOf(saved?.medications.orEmpty()) }
-        var allergies by remember(cat.id, saved?.id) { mutableStateOf(saved?.allergies.orEmpty()) }
-        var previous by remember(cat.id, saved?.id) { mutableStateOf(saved?.previousGrooming.orEmpty()) }
-        var triggers by remember(cat.id, saved?.id) { mutableStateOf(saved?.behaviourTriggers.orEmpty()) }
-        var advice by remember(cat.id, saved?.id) { mutableStateOf(saved?.handlingAdvice.orEmpty()) }
-        var brushing by remember(cat.id, saved?.id) { mutableStateOf(saved?.brushingTolerance ?: "UNKNOWN") }
-        var bathing by remember(cat.id, saved?.id) { mutableStateOf(saved?.bathingTolerance ?: "UNKNOWN") }
-        var dryer by remember(cat.id, saved?.id) { mutableStateOf(saved?.dryerTolerance ?: "UNKNOWN") }
-        var nails by remember(cat.id, saved?.id) { mutableStateOf(saved?.nailsTolerance ?: "UNKNOWN") }
+        var health by rememberSaveable(cat.id) { mutableStateOf(saved?.healthConditions.orEmpty()) }
+        var meds by rememberSaveable(cat.id) { mutableStateOf(saved?.medications.orEmpty()) }
+        var allergies by rememberSaveable(cat.id) { mutableStateOf(saved?.allergies.orEmpty()) }
+        var previous by rememberSaveable(cat.id) { mutableStateOf(saved?.previousGrooming.orEmpty()) }
+        var triggers by rememberSaveable(cat.id) { mutableStateOf(saved?.behaviourTriggers.orEmpty()) }
+        var advice by rememberSaveable(cat.id) { mutableStateOf(saved?.handlingAdvice.orEmpty()) }
+        var brushing by rememberSaveable(cat.id) { mutableStateOf(saved?.brushingTolerance ?: "UNKNOWN") }
+        var bathing by rememberSaveable(cat.id) { mutableStateOf(saved?.bathingTolerance ?: "UNKNOWN") }
+        var dryer by rememberSaveable(cat.id) { mutableStateOf(saved?.dryerTolerance ?: "UNKNOWN") }
+        var nails by rememberSaveable(cat.id) { mutableStateOf(saved?.nailsTolerance ?: "UNKNOWN") }
         AlertDialog(
-            onDismissRequest = { intakeCat = null },
+            onDismissRequest = { },
             title = { Text("Owner intake • ${cat.name}") },
             text = {
                 Column(Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Owner-reported information. Groomer observations are recorded separately.")
+                    Text("Draft fields stay on screen until saved. Save intake before leaving this form.", color = MaterialTheme.colorScheme.secondary)
                     OutlinedTextField(health, { health = it }, label = { Text("Health conditions") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(meds, { meds = it }, label = { Text("Medications") }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(allergies, { allergies = it }, label = { Text("Allergies / sensitivities") }, modifier = Modifier.fillMaxWidth())
