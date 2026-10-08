@@ -39,6 +39,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var clientHistory by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var catHistory by remember { mutableStateOf<Cat?>(null) }
+    var catConsent by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var editingPayment by remember { mutableStateOf<Visit?>(null) }
     var editingCharges by remember { mutableStateOf<Visit?>(null) }
@@ -103,6 +104,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
+                        TextButton(onClick = { catConsent = cat }) { Text("Photo consent") }
                     }
                 }
             }
