@@ -434,7 +434,7 @@ private fun AddVisitDialog(cats: List<Cat>, onClose: ()->Unit, onSave: (String,L
     var date by rememberSaveable { mutableStateOf(java.time.LocalDate.now(ZoneId.of("Europe/London")).toString()) }
     var time by rememberSaveable { mutableStateOf("10:30") }; var price by rememberSaveable { mutableStateOf("45.00") }
     val parsed = remember(date,time) { runCatching { LocalDateTime.parse("$date $time", DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withResolverStyle(java.time.format.ResolverStyle.STRICT)).let { local -> ZoneId.of("Europe/London").rules.getValidOffsets(local).singleOrNull()?.let { offset -> local.toInstant(offset).toEpochMilli() } } }.getOrNull() }
-    val pence = remember(price) { price.toBigDecimalOrNull()?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
+    val pence = remember(price) { price.trim().toBigDecimalOrNull()?.takeIf { it.scale() <= 2 }?.multiply(java.math.BigDecimal(100))?.toLongExactOrNull() }
     val futureDate = parsed != null && AppointmentRules.validNewStart(parsed, System.currentTimeMillis())
     AlertDialog(onDismissRequest=onClose,title={Text("New appointment")},text={
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
