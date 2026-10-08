@@ -3,6 +3,8 @@ package com.purrspa.system.reports
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import androidx.core.content.FileProvider
@@ -28,8 +30,8 @@ object VisitPdf {
             .forEach { it.delete() }
     }
 
-    fun share(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?) {
-        val file = create(context, visit, cat, client, assessment)
+    fun share(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?, photos: List<VisitPhoto> = emptyList()) {
+        val file = create(context, visit, cat, client, assessment, photos)
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
@@ -40,7 +42,7 @@ object VisitPdf {
         context.startActivity(Intent.createChooser(intent, "Share grooming report"))
     }
 
-    fun create(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?): File {
+    fun create(context: Context, visit: Visit, cat: Cat, client: Client, assessment: GroomingAssessment?, photos: List<VisitPhoto> = emptyList()): File {
         val dir = File(context.cacheDir, "reports").apply { mkdirs() }
         val output = File(dir, "purrspa-${java.util.UUID.randomUUID()}.pdf")
         val document = PdfDocument()
@@ -88,6 +90,36 @@ object VisitPdf {
                 canvas.drawText("Purr Spa  |  Page $pageNumber", 44f, 815f, accent)
                 document.finishPage(page)
             } while (index < wrappedLines.size)
+            val selectedPhotos = photos.filter { it.visitId == visit.id && it.kind in setOf("BEFORE", "AFTER") }
+                .sortedWith(compareBy<VisitPhoto> { if (it.kind == "BEFORE") 0 else 1 }.thenBy { it.createdMillis })
+                .take(12)
+            for (photo in selectedPhotos) {
+                val source = File(context.filesDir, "visit_photos/${photo.privateFilename}")
+                if (!source.isFile || source.parentFile?.canonicalFile != File(context.filesDir, "visit_photos").canonicalFile) continue
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(source.absolutePath, bounds)
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) continue
+                val sample = maxOf(1, maxOf(bounds.outWidth, bounds.outHeight) / 1400)
+                val bitmap = runCatching {
+                    BitmapFactory.decodeFile(source.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+                }.getOrNull() ?: continue
+                try {
+                    pageNumber++
+                    val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNumber).create())
+                    val canvas = page.canvas
+                    canvas.drawText("PURR SPA", 44f, 55f, title)
+                    canvas.drawText("${photo.kind}  |  ${cat.name}", 44f, 85f, accent)
+                    val scale = minOf(507f / bitmap.width, 650f / bitmap.height)
+                    val width = bitmap.width * scale
+                    val height = bitmap.height * scale
+                    val left = (595f - width) / 2f
+                    canvas.drawBitmap(bitmap, null, RectF(left, 110f, left + width, 110f + height), null)
+                    canvas.drawText("Purr Spa  |  Page $pageNumber", 44f, 815f, accent)
+                    document.finishPage(page)
+                } finally {
+                    bitmap.recycle()
+                }
+            }
             val temp = File(dir, "${output.name}.tmp")
             temp.outputStream().use { document.writeTo(it) }
             if (!temp.renameTo(output)) {
