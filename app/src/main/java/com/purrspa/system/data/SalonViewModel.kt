@@ -57,6 +57,12 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (listOf(item.brushing, item.bathing, item.drying, item.nailTrim, item.paws, item.belly, item.tail).any { it !in -1..4 }) return
         viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
     }
+    fun setVisitCharges(visit: Visit, travelPence: Long, depositPence: Long) {
+        if (travelPence < 0 || depositPence < 0) return
+        val total = runCatching { Math.addExact(visit.pricePence, travelPence) }.getOrNull() ?: return
+        if (depositPence > total) return
+        viewModelScope.launch { db.visits().updateCharges(visit.id, travelPence, depositPence) }
+    }
     fun setVisitPayment(visit: Visit, status: String, method: String) {
         if (status !in setOf("UNPAID", "PAID")) return
         if (status == "PAID" && method !in setOf("CASH", "CARD", "BANK_TRANSFER", "OTHER")) return
