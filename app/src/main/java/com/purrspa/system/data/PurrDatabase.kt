@@ -12,7 +12,7 @@ data class Client(@PrimaryKey val id: String, val name: String, val phone: Strin
 data class Cat(@PrimaryKey val id: String, val clientId: String, val name: String, val breed: String = "", val notes: String = "", val sex: String = "", val dateOfBirth: String = "", val neutered: Boolean = false, val healthNotes: String = "")
 
 @Entity(tableName = "visits", foreignKeys = [ForeignKey(entity = Cat::class, parentColumns = ["id"], childColumns = ["catId"], onDelete = ForeignKey.RESTRICT)], indices = [Index("catId"), Index("startMillis")])
-data class Visit(@PrimaryKey val id: String, val catId: String, val startMillis: Long, val service: String, val location: String, val pricePence: Long, val status: String = "SCHEDULED", val notes: String = "", val paymentStatus: String = "UNPAID", val paymentMethod: String = "")
+data class Visit(@PrimaryKey val id: String, val catId: String, val startMillis: Long, val service: String, val location: String, val pricePence: Long, val status: String = "SCHEDULED", val notes: String = "", val paymentStatus: String = "UNPAID", val paymentMethod: String = "", val travelFeePence: Long = 0, val depositPaidPence: Long = 0)
 
 @Entity(tableName = "grooming_assessments", foreignKeys = [ForeignKey(entity = Visit::class, parentColumns = ["id"], childColumns = ["visitId"], onDelete = ForeignKey.CASCADE)], indices = [Index(value = ["visitId"], unique = true)])
 data class GroomingAssessment(
