@@ -36,10 +36,11 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         if (item.name.isBlank()) return
         viewModelScope.launch { db.cats().updateProfile(item.id, item.name.trim(), item.breed.trim(), item.notes.trim(), item.sex, item.dateOfBirth, item.neutered, item.healthNotes.trim()) }
     }
-    fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
+    fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean, source: String) {
+        if (source !in setOf("OWNER_VERBAL", "OWNER_WRITTEN", "STAFF_RECORDED")) return
         val safeSocial = ConsentRules.effectiveSocialConsent(photoAllowed, socialAllowed)
         viewModelScope.launch {
-            db.recordConsent(ConsentEvent(UUID.randomUUID().toString(), cat.id, photoAllowed, safeSocial, System.currentTimeMillis()))
+            db.recordConsent(ConsentEvent(UUID.randomUUID().toString(), cat.id, photoAllowed, safeSocial, System.currentTimeMillis(), source))
         }
     }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
