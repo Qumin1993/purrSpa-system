@@ -537,13 +537,24 @@ private fun EditCatDialog(item: Cat, onClose: () -> Unit, onSave: (Cat) -> Unit)
     var name by remember(item.id) { mutableStateOf(item.name) }
     var breed by remember(item.id) { mutableStateOf(item.breed) }
     var notes by remember(item.id) { mutableStateOf(item.notes) }
+    var sex by remember(item.id) { mutableStateOf(item.sex) }
+    var dob by remember(item.id) { mutableStateOf(item.dateOfBirth) }
+    var neutered by remember(item.id) { mutableStateOf(item.neutered) }
+    var healthNotes by remember(item.id) { mutableStateOf(item.healthNotes) }
     AlertDialog(onDismissRequest = onClose, title = { Text("Edit cat") }, text = {
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Field(name, { name = it }, "Name")
             Field(breed, { breed = it }, "Breed")
+            Field(sex, { sex = it }, "Sex (optional)")
+            Field(dob, { dob = it }, "Date of birth YYYY-MM-DD (optional)")
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Checkbox(checked = neutered, onCheckedChange = { neutered = it })
+                Text("Neutered")
+            }
+            OutlinedTextField(healthNotes, { healthNotes = it }, label = { Text("Owner-reported health and medication notes") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(notes, { notes = it }, label = { Text("Handling notes") }, modifier = Modifier.fillMaxWidth())
         }
     }, confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = {
-        onSave(item.copy(name = name.trim(), breed = breed.trim(), notes = notes.trim()))
+        onSave(item.copy(name = name.trim(), breed = breed.trim(), notes = notes.trim(), sex = sex.trim(), dateOfBirth = dob.trim(), neutered = neutered, healthNotes = healthNotes.trim()))
     }) { Text("Save") } }, dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
 }
