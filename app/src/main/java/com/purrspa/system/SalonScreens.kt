@@ -35,12 +35,14 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val visits by vm.visits.collectAsStateWithLifecycle()
     val assessments by vm.assessments.collectAsStateWithLifecycle()
     val consentEvents by vm.consentEvents.collectAsStateWithLifecycle()
+    val ownerIntakes by vm.ownerIntakes.collectAsStateWithLifecycle()
     var showAdd by rememberSaveable(page) { mutableStateOf(false) }
     var editingClient by remember { mutableStateOf<Client?>(null) }
     var clientHistory by remember { mutableStateOf<Client?>(null) }
     var editingCat by remember { mutableStateOf<Cat?>(null) }
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var catConsent by remember { mutableStateOf<Cat?>(null) }
+    var intakeCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var editingPayment by remember { mutableStateOf<Visit?>(null) }
     var editingCharges by remember { mutableStateOf<Visit?>(null) }
@@ -103,6 +105,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Text("${cat.breed.ifBlank { "Breed not specified" }} • Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}", color = MaterialTheme.colorScheme.secondary)
                             if (cat.sex.isNotBlank() || cat.dateOfBirth.isNotBlank()) Text(listOf(cat.sex, cat.dateOfBirth).filter { it.isNotBlank() }.joinToString(" • "), color = MaterialTheme.colorScheme.secondary)
                         }
+                        TextButton(onClick = { intakeCat = cat }) { Text("Owner intake") }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
                         Text("Photos: ${if (cat.photoConsent) "Allowed" else "Not allowed"} • Social: ${if (cat.socialConsent) "Allowed" else "Not allowed"}", color = MaterialTheme.colorScheme.secondary)
@@ -369,6 +372,59 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 }
             },
             confirmButton = { TextButton(onClick = { clientHistory = null }) { Text("Close") } }
+        )
+    }
+    intakeCat?.let { cat ->
+        val saved = ownerIntakes.firstOrNull { it.catId == cat.id }
+        var health by remember(cat.id, saved?.id) { mutableStateOf(saved?.healthConditions.orEmpty()) }
+        var meds by remember(cat.id, saved?.id) { mutableStateOf(saved?.medications.orEmpty()) }
+        var allergies by remember(cat.id, saved?.id) { mutableStateOf(saved?.allergies.orEmpty()) }
+        var previous by remember(cat.id, saved?.id) { mutableStateOf(saved?.previousGrooming.orEmpty()) }
+        var triggers by remember(cat.id, saved?.id) { mutableStateOf(saved?.behaviourTriggers.orEmpty()) }
+        var advice by remember(cat.id, saved?.id) { mutableStateOf(saved?.handlingAdvice.orEmpty()) }
+        var brushing by remember(cat.id, saved?.id) { mutableStateOf(saved?.brushingTolerance ?: "UNKNOWN") }
+        var bathing by remember(cat.id, saved?.id) { mutableStateOf(saved?.bathingTolerance ?: "UNKNOWN") }
+        var dryer by remember(cat.id, saved?.id) { mutableStateOf(saved?.dryerTolerance ?: "UNKNOWN") }
+        var nails by remember(cat.id, saved?.id) { mutableStateOf(saved?.nailsTolerance ?: "UNKNOWN") }
+        AlertDialog(
+            onDismissRequest = { intakeCat = null },
+            title = { Text("Owner intake • ${cat.name}") },
+            text = {
+                Column(Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Owner-reported information. Groomer observations are recorded separately.")
+                    OutlinedTextField(health, { health = it }, label = { Text("Health conditions") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(meds, { meds = it }, label = { Text("Medications") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(allergies, { allergies = it }, label = { Text("Allergies / sensitivities") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(previous, { previous = it }, label = { Text("Previous grooming") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(triggers, { triggers = it }, label = { Text("Behaviour and triggers") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(advice, { advice = it }, label = { Text("Handling advice") }, modifier = Modifier.fillMaxWidth())
+                    listOf("Brushing" to brushing, "Bathing" to bathing, "Dryer" to dryer, "Nails" to nails).forEach { (label, value) ->
+                        Text(label, style = MaterialTheme.typography.titleSmall)
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOf("UNKNOWN", "OK", "SENSITIVE", "DIFFICULT").forEach { choice ->
+                                FilterChip(selected = value == choice, onClick = {
+                                    when(label) {
+                                        "Brushing" -> brushing = choice
+                                        "Bathing" -> bathing = choice
+                                        "Dryer" -> dryer = choice
+                                        else -> nails = choice
+                                    }
+                                }, label = { Text(choice.lowercase().replaceFirstChar { it.uppercase() }) })
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = {
+                vm.saveOwnerIntake(OwnerIntake(
+                    id = saved?.id ?: java.util.UUID.randomUUID().toString(), catId = cat.id,
+                    healthConditions = health.trim(), medications = meds.trim(), allergies = allergies.trim(),
+                    previousGrooming = previous.trim(), behaviourTriggers = triggers.trim(), handlingAdvice = advice.trim(),
+                    brushingTolerance = brushing, bathingTolerance = bathing, dryerTolerance = dryer, nailsTolerance = nails
+                ))
+                intakeCat = null
+            }) { Text("Save intake") } },
+            dismissButton = { TextButton(onClick = { intakeCat = null }) { Text("Cancel") } }
         )
     }
     catConsent?.let { cat ->
