@@ -60,6 +60,23 @@ data class OwnerIntake(
     val isDraft: Boolean = true
 )
 
+@Entity(tableName = "visit_photos", foreignKeys = [ForeignKey(entity = Visit::class, parentColumns = ["id"], childColumns = ["visitId"], onDelete = ForeignKey.CASCADE)], indices = [Index("visitId")])
+data class VisitPhoto(
+    @PrimaryKey val id: String,
+    val visitId: String,
+    val kind: String,
+    val privateFilename: String,
+    val createdMillis: Long
+)
+
+@Dao
+interface VisitPhotoDao {
+    @Query("SELECT * FROM visit_photos ORDER BY createdMillis DESC")
+    fun observe(): Flow<List<VisitPhoto>>
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(item: VisitPhoto)
+}
+
 @Dao
 interface OwnerIntakeDao {
     @Query("SELECT * FROM owner_intakes ORDER BY updatedMillis DESC")
@@ -120,12 +137,13 @@ interface VisitDao {
     @Query("UPDATE visits SET status = :next WHERE id = :id AND status = :expected")
     suspend fun transitionStatus(id: String, expected: String, next: String): Int
 }
-@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class, OwnerIntake::class], version = 10, exportSchema = true)
+@Database(entities = [Client::class, Cat::class, Visit::class, GroomingAssessment::class, ConsentEvent::class, OwnerIntake::class, VisitPhoto::class], version = 11, exportSchema = true)
 abstract class PurrDatabase : RoomDatabase() {
     abstract fun clients(): ClientDao
     abstract fun cats(): CatDao
     abstract fun visits(): VisitDao
     abstract fun assessments(): AssessmentDao
+    abstract fun visitPhotos(): VisitPhotoDao
     abstract fun ownerIntakes(): OwnerIntakeDao
     abstract fun consentEvents(): ConsentEventDao
     suspend fun recordConsent(event: ConsentEvent): Boolean = withTransaction {
@@ -223,9 +241,15 @@ abstract class PurrDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE owner_intakes ADD COLUMN isDraft INTEGER NOT NULL DEFAULT 0")
             }
         }
+        val MIGRATION_10_11 = object : androidx.room.migration.Migration(10, 11) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS visit_photos (id TEXT NOT NULL PRIMARY KEY, visitId TEXT NOT NULL, kind TEXT NOT NULL, privateFilename TEXT NOT NULL, createdMillis INTEGER NOT NULL, FOREIGN KEY(visitId) REFERENCES visits(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_visit_photos_visitId ON visit_photos(visitId)")
+            }
+        }
         @Volatile private var instance: PurrDatabase? = null
         fun get(context: Context): PurrDatabase = instance ?: synchronized(this) {
-            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10).build().also { instance = it }
+            instance ?: Room.databaseBuilder(context.applicationContext, PurrDatabase::class.java, "purrspa.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build().also { instance = it }
         }
     }
 }
