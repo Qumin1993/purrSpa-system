@@ -18,6 +18,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
@@ -55,6 +57,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var includePrivateNotes by remember { mutableStateOf(false) }
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     var photoTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var galleryVisit by remember { mutableStateOf<Visit?>(null) }
+    var pendingPhotoDelete by remember { mutableStateOf<VisitPhoto?>(null) }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val target = photoTarget
         if (uri != null && target != null) vm.importVisitPhoto(target.first, target.second, uri)
@@ -257,7 +261,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                     photoTarget = visit.id to "AFTER"
                                     photoPicker.launch("image/*")
                                 }) { Text("Add after photo") }
-                                Text("Photos: ${visitPhotos.count { it.visitId == visit.id && it.kind == "BEFORE" }} before / ${visitPhotos.count { it.visitId == visit.id && it.kind == "AFTER" }} after")
+                                TextButton(onClick = { galleryVisit = visit }) { Text("Gallery (${visitPhotos.count { it.visitId == visit.id }})") }
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
                                 TextButton(enabled = reportCat != null && reportOwner != null, onClick = {
@@ -591,6 +595,49 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     }
     bookingError?.let { message ->
         AlertDialog(onDismissRequest = { vm.clearBookingError() }, title = { Text("Booking conflict") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { vm.clearBookingError() }) { Text("OK") } })
+    }
+    galleryVisit?.let { visit ->
+        AlertDialog(
+            onDismissRequest = { galleryVisit = null },
+            title = { Text("Visit photos") },
+            text = {
+                Column(Modifier.heightIn(max = 540.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listOf("BEFORE", "AFTER").forEach { kind ->
+                        Text(kind.lowercase().replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleMedium)
+                        val photos = visitPhotos.filter { it.visitId == visit.id && it.kind == kind }
+                        if (photos.isEmpty()) Text("No photos yet")
+                        photos.forEach { photo ->
+                            val file = remember(photo.privateFilename) { java.io.File(context.filesDir, "visit_photos/${photo.privateFilename}") }
+                            val bitmap = remember(photo.id) {
+                                if (!file.isFile) null else runCatching {
+                                    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                    BitmapFactory.decodeFile(file.absolutePath, options)
+                                    val sample = maxOf(1, maxOf(options.outWidth, options.outHeight) / 1024)
+                                    BitmapFactory.decodeFile(file.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+                                }.getOrNull()
+                            }
+                            if (bitmap != null) {
+                                Image(bitmap = bitmap.asImageBitmap(), contentDescription = "${kind.lowercase()} photo", modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp))
+                            } else Text("Photo unavailable", color = MaterialTheme.colorScheme.error)
+                            TextButton(onClick = { pendingPhotoDelete = photo }) { Text("Delete photo") }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { galleryVisit = null }) { Text("Close") } }
+        )
+    }
+    pendingPhotoDelete?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { pendingPhotoDelete = null },
+            title = { Text("Delete this photo?") },
+            text = { Text("The photo will be permanently removed from this device.") },
+            confirmButton = { TextButton(onClick = {
+                vm.deleteVisitPhoto(photo)
+                pendingPhotoDelete = null
+            }) { Text("Delete") } },
+            dismissButton = { TextButton(onClick = { pendingPhotoDelete = null }) { Text("Keep photo") } }
+        )
     }
     assessingVisit?.let { visit ->
         GroomingAssessmentDialog(assessments.firstOrNull { it.visitId == visit.id } ?: GroomingAssessment(id = visit.id, visitId = visit.id), onClose = { assessingVisit = null }, onSave = { vm.saveAssessment(it); assessingVisit = null }, onDraftChange = { vm.saveAssessment(it) })
