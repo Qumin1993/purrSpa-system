@@ -18,6 +18,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val assessments = db.assessments().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val ownerIntakes = db.ownerIntakes().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val consentEvents = db.consentEvents().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val visits = db.visits().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun addClient(name: String, phone: String, email: String, address: String) {
@@ -58,6 +59,16 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                 _bookingError.value = "Appointment overlaps an existing booking (estimated 2 hours)."
             } else {
                 _bookingError.value = null
+            }
+        }
+    }
+    fun saveOwnerIntake(item: OwnerIntake) {
+        val valid = setOf("UNKNOWN", "OK", "SENSITIVE", "DIFFICULT")
+        if (listOf(item.brushingTolerance, item.bathingTolerance, item.dryerTolerance, item.nailsTolerance).any { it !in valid }) return
+        if (item.source !in setOf("OWNER_ENTERED", "STAFF_RECORDED")) return
+        viewModelScope.launch {
+            if (db.cats().get(item.catId) != null) {
+                db.ownerIntakes().upsert(item.copy(updatedMillis = System.currentTimeMillis()))
             }
         }
     }
