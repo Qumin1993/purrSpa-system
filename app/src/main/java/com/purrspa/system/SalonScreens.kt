@@ -541,12 +541,14 @@ private fun EditCatDialog(item: Cat, onClose: () -> Unit, onSave: (Cat) -> Unit)
     var dob by remember(item.id) { mutableStateOf(item.dateOfBirth) }
     var neutered by remember(item.id) { mutableStateOf(item.neutered) }
     var healthNotes by remember(item.id) { mutableStateOf(item.healthNotes) }
+    val validDob = dob.isBlank() || runCatching { java.time.LocalDate.parse(dob) }.getOrNull()?.let { !it.isAfter(java.time.LocalDate.now(ZoneId.of("Europe/London"))) } == true
     AlertDialog(onDismissRequest = onClose, title = { Text("Edit cat") }, text = {
         Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState())) {
             Field(name, { name = it }, "Name")
             Field(breed, { breed = it }, "Breed")
             Field(sex, { sex = it }, "Sex (optional)")
             Field(dob, { dob = it }, "Date of birth YYYY-MM-DD (optional)")
+            if (!validDob) Text("Enter a valid birth date, not in the future.", color = MaterialTheme.colorScheme.error)
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Checkbox(checked = neutered, onCheckedChange = { neutered = it })
                 Text("Neutered")
@@ -554,7 +556,7 @@ private fun EditCatDialog(item: Cat, onClose: () -> Unit, onSave: (Cat) -> Unit)
             OutlinedTextField(healthNotes, { healthNotes = it }, label = { Text("Owner-reported health and medication notes") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(notes, { notes = it }, label = { Text("Handling notes") }, modifier = Modifier.fillMaxWidth())
         }
-    }, confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = {
+    }, confirmButton = { TextButton(enabled = name.isNotBlank() && validDob, onClick = {
         onSave(item.copy(name = name.trim(), breed = breed.trim(), notes = notes.trim(), sex = sex.trim(), dateOfBirth = dob.trim(), neutered = neutered, healthNotes = healthNotes.trim()))
     }) { Text("Save") } }, dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
 }
