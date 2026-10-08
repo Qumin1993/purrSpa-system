@@ -271,6 +271,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Text("Completed visits: ${monthlyCompleted.size}", style = MaterialTheme.typography.titleMedium)
                     Text("Service value: £${"%.2f".format(Locale.UK, serviceValuePence / 100.0)}", style = MaterialTheme.typography.titleLarge)
                     Text("Based on completed appointments, not confirmed payments or accounting revenue.", color = MaterialTheme.colorScheme.secondary)
+                    val paidCompleted = monthlyCompleted.filter { it.paymentStatus == "PAID" }
+                    val paidTotalPence = paidCompleted.sumOf { it.pricePence + it.travelFeePence }
+                    Text("Marked fully paid: ${paidCompleted.size} visits • £${"%.2f".format(Locale.UK, paidTotalPence / 100.0)}")
+                    Text("Payment status is manually recorded; amounts are not bank-verified.", color = MaterialTheme.colorScheme.secondary)
                 }
                 HorizontalDivider()
                 Text("Completed visit reports", style = MaterialTheme.typography.titleLarge)
