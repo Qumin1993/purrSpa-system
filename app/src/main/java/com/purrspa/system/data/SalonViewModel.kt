@@ -33,7 +33,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun updateCat(item: Cat) {
         if (item.name.isBlank()) return
-        viewModelScope.launch { db.cats().update(item) }
+        viewModelScope.launch { db.cats().updateProfile(item.id, item.name.trim(), item.breed.trim(), item.notes.trim(), item.sex, item.dateOfBirth, item.neutered, item.healthNotes.trim()) }
     }
     fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
         val safeSocial = photoAllowed && socialAllowed
