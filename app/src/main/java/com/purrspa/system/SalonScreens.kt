@@ -97,6 +97,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         Column(Modifier.weight(1f)) {
                             Text(cat.name, style = MaterialTheme.typography.titleMedium)
                             Text("${cat.breed.ifBlank { "Breed not specified" }} • Owner: ${clients.firstOrNull { it.id == cat.clientId }?.name ?: "Unknown"}", color = MaterialTheme.colorScheme.secondary)
+                            if (cat.sex.isNotBlank() || cat.dateOfBirth.isNotBlank()) Text(listOf(cat.sex, cat.dateOfBirth).filter { it.isNotBlank() }.joinToString(" • "), color = MaterialTheme.colorScheme.secondary)
                         }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
