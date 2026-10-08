@@ -18,6 +18,8 @@
 
 - Monthly reports now separately show manually marked fully paid completed visits and their service-plus-travel amounts. This is not bank reconciliation or verified revenue.
 
+- Added VisitBalance unit tests for deposit arithmetic, full-payment flags, overflow, and invalid payment transitions. Tests have NOT been run on Android/Gradle yet.
+
 ## Known blockers and remaining work
 1. Gradle wrapper JAR/scripts missing. Run Android Studio Gradle sync with local Gradle; generate wrapper and commit it.
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
