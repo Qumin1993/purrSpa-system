@@ -393,6 +393,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     }
                     Text("Uncheck either permission to withdraw it. Confirm the owner's choice before saving.")
                     Text("Recorded decisions: ${consentEvents.count { it.catId == cat.id }}")
+                    consentEvents.filter { it.catId == cat.id }.sortedByDescending { it.recordedMillis }.take(3).forEach { event ->
+                        Text("Photos: ${if (event.photoAllowed) "Yes" else "No"} • Social: ${if (event.socialAllowed) "Yes" else "No"}")
+                    }
                     if (cat.consentUpdatedMillis > 0L) Text("Last recorded: ${java.time.Instant.ofEpochMilli(cat.consentUpdatedMillis).atZone(java.time.ZoneId.of("Europe/London")).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.UK))}")
                 }
             },
