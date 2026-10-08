@@ -206,8 +206,8 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 }) { Text("Share PDF") }
                                 if (visit.status == "SCHEDULED") {
                                     TextButton(onClick = { vm.setVisitStatus(visit, "IN_PROGRESS") }) { Text("Start") }
-                                    TextButton(onClick = { vm.setVisitStatus(visit, "CANCELLED") }) { Text("Cancel") }
-                                    TextButton(onClick = { vm.setVisitStatus(visit, "NO_SHOW") }) { Text("No show") }
+                                    TextButton(onClick = { pendingStatusChange = visit to "CANCELLED" }) { Text("Cancel") }
+                                    TextButton(onClick = { pendingStatusChange = visit to "NO_SHOW" }) { Text("No show") }
                                 }
                                 if (visit.status == "IN_PROGRESS") TextButton(onClick = { vm.setVisitStatus(visit, "COMPLETED") }) { Text("Complete") }
                             }
