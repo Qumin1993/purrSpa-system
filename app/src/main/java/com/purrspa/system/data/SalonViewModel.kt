@@ -38,11 +38,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     fun updateCatConsents(cat: Cat, photoAllowed: Boolean, socialAllowed: Boolean) {
         val safeSocial = photoAllowed && socialAllowed
         viewModelScope.launch {
-            db.cats().update(cat.copy(
-                photoConsent = photoAllowed,
-                socialConsent = safeSocial,
-                consentUpdatedMillis = System.currentTimeMillis()
-            ))
+            db.cats().updateConsents(cat.id, photoAllowed, safeSocial, System.currentTimeMillis())
         }
     }
     fun addVisit(catId: String, startMillis: Long, service: String, location: String, pricePence: Long) {
