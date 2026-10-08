@@ -75,6 +75,8 @@ interface VisitPhotoDao {
     fun observe(): Flow<List<VisitPhoto>>
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(item: VisitPhoto)
+    @Query("DELETE FROM visit_photos WHERE id = :id")
+    suspend fun deleteById(id: String): Int
 }
 
 @Dao
