@@ -430,10 +430,16 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
         var bathing by rememberSaveable(cat.id) { mutableStateOf(saved?.bathingTolerance ?: "UNKNOWN") }
         var dryer by rememberSaveable(cat.id) { mutableStateOf(saved?.dryerTolerance ?: "UNKNOWN") }
         var nails by rememberSaveable(cat.id) { mutableStateOf(saved?.nailsTolerance ?: "UNKNOWN") }
-        var initialized by remember(cat.id) { mutableStateOf(false) }
-        LaunchedEffect(cat.id, saved?.id) { initialized = true }
-        LaunchedEffect(health, meds, allergies, previous, triggers, advice, brushing, bathing, dryer, nails, initialized) {
-            if (initialized) {
+        val changed = health != saved?.healthConditions.orEmpty() ||
+            meds != saved?.medications.orEmpty() || allergies != saved?.allergies.orEmpty() ||
+            previous != saved?.previousGrooming.orEmpty() || triggers != saved?.behaviourTriggers.orEmpty() ||
+            advice != saved?.handlingAdvice.orEmpty() ||
+            brushing != (saved?.brushingTolerance ?: "UNKNOWN") ||
+            bathing != (saved?.bathingTolerance ?: "UNKNOWN") ||
+            dryer != (saved?.dryerTolerance ?: "UNKNOWN") ||
+            nails != (saved?.nailsTolerance ?: "UNKNOWN")
+        LaunchedEffect(health, meds, allergies, previous, triggers, advice, brushing, bathing, dryer, nails, changed) {
+            if (changed) {
                 kotlinx.coroutines.delay(750)
                 vm.saveOwnerIntake(OwnerIntake(
                     id = saved?.id ?: cat.id, catId = cat.id,
