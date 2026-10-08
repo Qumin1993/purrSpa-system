@@ -448,7 +448,10 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             title = { Text("Visit payment") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Amount: £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)}")
+                    val fullAmount = visit.pricePence + visit.travelFeePence
+                    Text("Total including travel: £${"%.2f".format(Locale.UK, fullAmount / 100.0)}")
+                    Text("Deposit recorded: £${"%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)}")
+                    Text("Balance before final payment: £${"%.2f".format(Locale.UK, (fullAmount - visit.depositPaidPence) / 100.0)}")
                     Text("Record whether this visit has been paid in full.")
                     listOf("CASH", "CARD", "BANK_TRANSFER", "OTHER").forEach { option ->
                         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
