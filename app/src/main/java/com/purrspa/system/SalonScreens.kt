@@ -186,7 +186,13 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 if (visitSearch.isNotBlank() || visitStatusFilter != "ALL") {
                     TextButton(onClick = { visitSearch = ""; visitStatusFilter = "ALL" }) { Text("Clear filters") }
                 }
-                if (visibleVisits.isEmpty()) Text("No visits match these filters.")
+                if (visibleVisits.isEmpty()) {
+                    Text(
+                        if (page == "Calendar" && selectedDay == null) "Enter a valid date to view appointments."
+                        else if (scopedTotal == 0) "No appointments recorded for this ${if (page == "Calendar") "day" else "salon"}."
+                        else "No visits match the current search or status filter."
+                    )
+                }
                 visibleVisits.forEach { visit ->
                     Card {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
