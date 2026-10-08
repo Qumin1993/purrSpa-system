@@ -41,6 +41,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var editingPayment by remember { mutableStateOf<Visit?>(null) }
+    var editingCharges by remember { mutableStateOf<Visit?>(null) }
     var pendingStatusChange by remember { mutableStateOf<Pair<Visit, String>?>(null) }
     var reportToShare by remember { mutableStateOf<Visit?>(null) }
     var includePrivateNotes by remember { mutableStateOf(false) }
@@ -211,6 +212,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingVisit = visit }) { Text("Edit notes") }
                                 TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
+                                TextButton(onClick = { editingCharges = visit }) { Text("Fees / deposit") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
                                 val reportCat = cats.firstOrNull { it.id == visit.catId }
                                 val reportOwner = clients.firstOrNull { it.id == reportCat?.clientId }
