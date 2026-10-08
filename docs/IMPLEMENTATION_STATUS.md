@@ -24,6 +24,8 @@
 
 - Cat profile updates now target profile columns only, preventing stale edit dialogs from overwriting newer consent changes. Added centralized opt-in consent checks and unexecuted unit tests. No image capture or sharing flow is implemented yet, and a stored checkbox is not proof of owner authorization.
 
+- Consent events now include a staff-selected recording source (staff recorded, owner verbal, owner written) and show dated recent history. This is an operator statement, not an owner signature or independent evidence. Earlier entries may have the historical default OWNER_VERBAL.
+
 ## Known blockers and remaining work
 1. Gradle wrapper JAR/scripts missing. Run Android Studio Gradle sync with local Gradle; generate wrapper and commit it.
 2. No Android build, unit, instrumented or E2E tests have run; compile errors remain possible. Added PDF wrapping Robolectric tests, not yet executed.
