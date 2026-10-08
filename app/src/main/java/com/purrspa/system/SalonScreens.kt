@@ -374,6 +374,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     catConsent?.let { cat ->
         var photoAllowed by remember(cat.id) { mutableStateOf(cat.photoConsent) }
         var socialAllowed by remember(cat.id) { mutableStateOf(cat.socialConsent) }
+        var consentSource by remember(cat.id) { mutableStateOf("STAFF_RECORDED") }
         AlertDialog(
             onDismissRequest = { catConsent = null },
             title = { Text("Photo permissions: ${cat.name}") },
