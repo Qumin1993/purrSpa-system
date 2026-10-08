@@ -43,6 +43,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var catHistory by remember { mutableStateOf<Cat?>(null) }
     var catConsent by remember { mutableStateOf<Cat?>(null) }
     var intakeCat by remember { mutableStateOf<Cat?>(null) }
+    var taggingCat by remember { mutableStateOf<Cat?>(null) }
     var editingVisit by remember { mutableStateOf<Visit?>(null) }
     var editingPayment by remember { mutableStateOf<Visit?>(null) }
     var editingCharges by remember { mutableStateOf<Visit?>(null) }
@@ -115,11 +116,13 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 if ("mat" in combined || "knot" in combined) add("Mats")
                                 if (ownerIntake?.handlingAdvice?.contains("belly", ignoreCase = true) == true || recentAssessment?.belly?.let { it >= 3 } == true) add("Sensitive belly")
                             }
-                            if (flags.isNotEmpty()) Text(flags.joinToString("  •  "), color = MaterialTheme.colorScheme.error)
+                            val visibleFlags = (cat.handlingTags.split("|").filter { it.isNotBlank() } + flags).distinct()
+                            if (visibleFlags.isNotEmpty()) Text(visibleFlags.joinToString("  •  "), color = MaterialTheme.colorScheme.error)
                             val nextAdvice = recentAssessment?.recommendations?.takeIf { it.isNotBlank() } ?: ownerIntake?.handlingAdvice?.takeIf { it.isNotBlank() }
                             if (nextAdvice != null) Text("Next visit: $nextAdvice", color = MaterialTheme.colorScheme.secondary)
 
                         }
+                        TextButton(onClick = { taggingCat = cat }) { Text("Tags") }
                         TextButton(onClick = { intakeCat = cat }) { Text("Owner intake") }
                         TextButton(onClick = { catHistory = cat }) { Text("History") }
                         TextButton(onClick = { editingCat = cat }) { Text("Edit") }
@@ -387,6 +390,32 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 }
             },
             confirmButton = { TextButton(onClick = { clientHistory = null }) { Text("Close") } }
+        )
+    }
+    taggingCat?.let { cat ->
+        val availableTags = listOf("Spicy", "Senior", "Fleas", "Mats", "Sensitive belly")
+        var selected by remember(cat.id) { mutableStateOf(cat.handlingTags.split("|").filter { it.isNotBlank() }.toSet()) }
+        AlertDialog(
+            onDismissRequest = { taggingCat = null },
+            title = { Text("Quick tags • ${cat.name}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Choose the handling warnings to show on this cat's profile.")
+                    availableTags.forEach { tag ->
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Checkbox(checked = tag in selected, onCheckedChange = { checked ->
+                                selected = if (checked) selected + tag else selected - tag
+                            })
+                            Text(tag)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = {
+                vm.updateCatHandlingTags(cat.id, selected)
+                taggingCat = null
+            }) { Text("Save tags") } },
+            dismissButton = { TextButton(onClick = { taggingCat = null }) { Text("Cancel") } }
         )
     }
     intakeCat?.let { cat ->
