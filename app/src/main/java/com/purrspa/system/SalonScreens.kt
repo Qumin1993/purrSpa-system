@@ -62,7 +62,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Spacer(Modifier.width(12.dp))
                     Text("Upcoming appointments", style = MaterialTheme.typography.titleLarge)
                 }
-                visits.filter { it.startMillis >= System.currentTimeMillis() && it.status == "SCHEDULED" }.sortedBy { it.startMillis }.take(8).forEach {
+                val upcoming = visits.filter { it.startMillis >= System.currentTimeMillis() && it.status == "SCHEDULED" }.sortedBy { it.startMillis }.take(8)
+                if (upcoming.isEmpty()) Text("No upcoming appointments.")
+                upcoming.forEach {
                     Text("${cats.firstOrNull { c -> c.id == it.catId }?.name ?: "Unknown cat"} • ${it.service} • ${dateTime(it.startMillis)}")
                 }
             }
