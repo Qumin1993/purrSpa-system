@@ -102,16 +102,17 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                 }
                                 var entryBytes = 0L
                                 val dbOutput = if (entry.name == "database/purrspa.db") extractedDb.outputStream() else null
-                                var header = ByteArray(16)
+                                val header = ByteArray(16)
                                 var headerRead = 0
                                 while (true) {
                                     val read = zip.read(buffer)
                                     if (read < 0) break
+                                    require(read.toLong() <= 1024L * 1024 * 1024 - totalBytes) { "Archive exceeds 1 GB limit" }
+                                    require(read.toLong() <= 512L * 1024 * 1024 - entryBytes) { "Entry exceeds 512 MB limit" }
                                     dbOutput?.write(buffer, 0, read)
                                     entryBytes += read
                                     totalBytes += read
-                                    require(totalBytes <= 1024L * 1024 * 1024) { "Archive exceeds 1 GB limit" }
-                                    if (entry.name == "database/purrspa.db" && headerRead < 16) {
+                                    if (headerRead < 16) {
                                         val take = minOf(read, 16 - headerRead)
                                         System.arraycopy(buffer, 0, header, headerRead, take)
                                         headerRead += take
@@ -127,7 +128,15 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                         require(entryBytes in 1..8192) { "Invalid backup metadata" }
                                         infoFound = true
                                     }
-                                    else -> photoCount++
+                                    else -> {
+                                        require(entryBytes in 8..(15L * 1024 * 1024)) { "Invalid photo size" }
+                                        val jpg = (header[0].toInt() and 255) == 0xFF && (header[1].toInt() and 255) == 0xD8
+                                        val png = header.sliceArray(0..7).contentEquals(byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10))
+                                        val webp = String(header, 0, 4, Charsets.US_ASCII) == "RIFF" &&
+                                            String(header, 8, 4, Charsets.US_ASCII) == "WEBP"
+                                        require(jpg || png || webp) { "Invalid photo file signature" }
+                                        photoCount++
+                                    }
                                 }
                                 zip.closeEntry()
                             }
