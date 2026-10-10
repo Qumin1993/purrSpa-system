@@ -247,7 +247,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                             stagedDb.rawQuery("SELECT privateFilename FROM visit_photos", null).use { c ->
                                 while (c.moveToNext()) referencedPhotos.add(c.getString(0))
                             }
-                            require(referencedPhotos == photoNames) { "Backup photo records do not match archived photos" }
+                            require(photoNames.containsAll(referencedPhotos)) { "Backup is missing photos referenced by the database" }
                         } finally { stagedDb.close() }
                         // Only stage for now: live DB must never be replaced while Room is open.
                         "Restore package validated and staged: ${photoCount} photos. Existing data unchanged; installation step not yet enabled."
