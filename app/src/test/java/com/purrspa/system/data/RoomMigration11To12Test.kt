@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.sqlite.db.SupportSQLiteOpenHelper
-import androidx.test.core.app.ApplicationProvider
 import android.content.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -15,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class RoomMigration11To12Test {
     @Test fun preservesExistingAssessmentAndAddsGroomerFields() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
         val name = "migration-11-12-${System.nanoTime()}.db"
         val helper = FrameworkSQLiteOpenHelperFactory().create(
             SupportSQLiteOpenHelper.Configuration.builder(context)
