@@ -11,9 +11,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
+    private val formSaveMutex = Mutex()
+    private val formRevision = AtomicLong()
+    private val latestFormRevisions = ConcurrentHashMap<String, Long>()
     private val _bookingError = MutableStateFlow<String?>(null)
     val bookingError = _bookingError.asStateFlow()
     private val _photoMessage = MutableStateFlow<String?>(null)
@@ -155,15 +162,29 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
         val valid = setOf("UNKNOWN", "OK", "SENSITIVE", "DIFFICULT")
         if (listOf(item.brushingTolerance, item.bathingTolerance, item.dryerTolerance, item.nailsTolerance).any { it !in valid }) return
         if (item.source !in setOf("OWNER_ENTERED", "STAFF_RECORDED")) return
+        val key = "intake:${item.catId}"
+        val revision = formRevision.incrementAndGet()
+        latestFormRevisions[key] = revision
         viewModelScope.launch {
-            if (db.cats().get(item.catId) != null) {
-                db.ownerIntakes().upsert(item.copy(updatedMillis = System.currentTimeMillis()))
+            formSaveMutex.withLock {
+                if (latestFormRevisions[key] == revision && db.cats().get(item.catId) != null) {
+                    db.ownerIntakes().upsert(item.copy(updatedMillis = System.currentTimeMillis()))
+                }
             }
         }
     }
     fun saveAssessment(item: GroomingAssessment) {
         if (listOf(item.brushing, item.bathing, item.drying, item.nailTrim, item.paws, item.belly, item.tail).any { it !in -1..4 }) return
-        viewModelScope.launch { db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis())) }
+        val key = "assessment:${item.visitId}"
+        val revision = formRevision.incrementAndGet()
+        latestFormRevisions[key] = revision
+        viewModelScope.launch {
+            formSaveMutex.withLock {
+                if (latestFormRevisions[key] == revision) {
+                    db.assessments().upsert(item.copy(updatedMillis = System.currentTimeMillis()))
+                }
+            }
+        }
     }
     fun setVisitCharges(visit: Visit, travelPence: Long, depositPence: Long) {
         if (!VisitBalance.validCharges(visit.pricePence, travelPence, depositPence)) return
