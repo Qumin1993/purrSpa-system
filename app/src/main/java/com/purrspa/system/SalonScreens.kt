@@ -62,6 +62,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     var assessingVisit by remember { mutableStateOf<Visit?>(null) }
     var photoTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
     var galleryVisit by remember { mutableStateOf<Visit?>(null) }
+    var summaryVisit by remember { mutableStateOf<Visit?>(null) }
     var pendingPhotoDelete by remember { mutableStateOf<VisitPhoto?>(null) }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val target = photoTarget
@@ -257,6 +258,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                                 TextButton(onClick = { editingPayment = visit }) { Text("Payment") }
                                 TextButton(onClick = { editingCharges = visit }) { Text("Fees / deposit") }
                                 TextButton(onClick = { assessingVisit = visit }) { Text("Groomer form") }
+                                TextButton(onClick = { summaryVisit = visit }) { Text("Visit summary") }
                                 val photoCat = cats.firstOrNull { it.id == visit.catId }
                                 TextButton(enabled = photoCat?.photoConsent == true, onClick = {
                                     photoTarget = visit.id to "BEFORE"
@@ -657,6 +659,54 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 pendingPhotoDelete = null
             }) { Text("Delete") } },
             dismissButton = { TextButton(onClick = { pendingPhotoDelete = null }) { Text("Keep photo") } }
+        )
+    }
+    summaryVisit?.let { visit ->
+        val cat = cats.firstOrNull { it.id == visit.catId }
+        val owner = clients.firstOrNull { it.id == cat?.clientId }
+        val assessment = assessments.firstOrNull { it.visitId == visit.id }
+        val photos = visitPhotos.filter { it.visitId == visit.id }
+        AlertDialog(
+            onDismissRequest = { summaryVisit = null },
+            title = { Text("Visit summary") },
+            text = {
+                Column(Modifier.fillMaxWidth().heightIn(max = 540.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(cat?.name ?: "Unknown cat", style = MaterialTheme.typography.titleLarge)
+                    Text("Owner: ${owner?.name ?: "Unknown"}")
+                    Text("Date: ${dateTime(visit.startMillis)}")
+                    Text("Service: ${visit.service}")
+                    Text("Location: ${visit.location}")
+                    Text("Status: ${visit.status.replace("_", " ")}")
+                    HorizontalDivider()
+                    Text("Groomer observations", style = MaterialTheme.typography.titleMedium)
+                    if (assessment == null) {
+                        Text("No groomer assessment recorded.")
+                    } else {
+                        val ratings = listOf("Brushing" to assessment.brushing, "Bath" to assessment.bathing, "Dryer" to assessment.drying, "Nails" to assessment.nailTrim, "Paws" to assessment.paws, "Belly" to assessment.belly, "Tail" to assessment.tail)
+                        ratings.forEach { (label, score) ->
+                            if (score >= 0) Text("$label: ${listOf("Very calm", "Calm", "Okay", "Nervous", "Stressed").getOrElse(score) { "Not assessed" }}")
+                        }
+                        if (assessment.coatCondition.isNotBlank()) Text("Coat / skin: ${assessment.coatCondition}")
+                        if (assessment.aggressionNotes.isNotBlank()) Text("Stress / aggression: ${assessment.aggressionNotes}")
+                        if (assessment.sensitiveAreas.isNotBlank()) Text("Sensitive areas: ${assessment.sensitiveAreas}")
+                        if (assessment.techniquesUsed.isNotBlank()) Text("Techniques: ${assessment.techniquesUsed}")
+                        if (assessment.recommendations.isNotBlank()) Text("Home care: ${assessment.recommendations}")
+                    }
+                    HorizontalDivider()
+                    Text("Photos", style = MaterialTheme.typography.titleMedium)
+                    Text("Before: ${photos.count { it.kind == "BEFORE" }} • After: ${photos.count { it.kind == "AFTER" }}")
+                    if (cat?.photoConsent != true && photos.isNotEmpty()) Text("Photo consent inactive: photos remain private and are excluded from PDF.", color = MaterialTheme.colorScheme.error)
+                    HorizontalDivider()
+                    Text("Payment: ${visit.paymentStatus.replace("_", " ")}")
+                    Text("Private salon notes are not shown in this summary or shared by default.", color = MaterialTheme.colorScheme.secondary)
+                }
+            },
+            confirmButton = { TextButton(onClick = {
+                summaryVisit = null
+                includePrivateNotes = false
+                reportToShare = visit
+            }) { Text("Share PDF") } },
+            dismissButton = { TextButton(onClick = { summaryVisit = null }) { Text("Close") } }
         )
     }
     assessingVisit?.let { visit ->
