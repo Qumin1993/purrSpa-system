@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import java.util.zip.ZipInputStream
 
 class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
@@ -71,6 +72,65 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 "Backup saved. Store this file securely: it contains personal client data."
             }.getOrElse { "Backup failed: ${it.message ?: "Unknown error"}" }
+        }
+    }
+    fun verifyBackup(uri: Uri) {
+        viewModelScope.launch {
+            _backupMessage.value = "Checking backup..."
+            _backupMessage.value = runCatching {
+                withContext(Dispatchers.IO) {
+                    val app = getApplication<Application>()
+                    val input = app.contentResolver.openInputStream(uri) ?: error("Cannot read selected file")
+                    var databaseFound = false
+                    var infoFound = false
+                    var photoCount = 0
+                    var totalBytes = 0L
+                    val buffer = ByteArray(8192)
+                    input.use { stream ->
+                        ZipInputStream(stream.buffered()).use { zip ->
+                            val names = mutableSetOf<String>()
+                            while (true) {
+                                val entry = zip.nextEntry ?: break
+                                require(!entry.isDirectory && names.add(entry.name)) { "Invalid or duplicate ZIP entry" }
+                                require(entry.name == "backup-info.txt" ||
+                                    entry.name == "database/purrspa.db" ||
+                                    (entry.name.startsWith("photos/") && entry.name.substringAfter("photos/").matches(Regex("[a-zA-Z0-9._-]{1,150}")))) {
+                                    "Unexpected ZIP entry"
+                                }
+                                var entryBytes = 0L
+                                var header = ByteArray(16)
+                                var headerRead = 0
+                                while (true) {
+                                    val read = zip.read(buffer)
+                                    if (read < 0) break
+                                    entryBytes += read
+                                    totalBytes += read
+                                    require(totalBytes <= 1024L * 1024 * 1024) { "Archive exceeds 1 GB limit" }
+                                    if (entry.name == "database/purrspa.db" && headerRead < 16) {
+                                        val take = minOf(read, 16 - headerRead)
+                                        System.arraycopy(buffer, 0, header, headerRead, take)
+                                        headerRead += take
+                                    }
+                                }
+                                when (entry.name) {
+                                    "database/purrspa.db" -> {
+                                        require(entryBytes >= 100 && String(header, Charsets.US_ASCII) == "SQLite format 3\\u0000") { "Invalid SQLite database" }
+                                        databaseFound = true
+                                    }
+                                    "backup-info.txt" -> {
+                                        require(entryBytes in 1..8192) { "Invalid backup metadata" }
+                                        infoFound = true
+                                    }
+                                    else -> photoCount++
+                                }
+                                zip.closeEntry()
+                            }
+                        }
+                    }
+                    require(databaseFound && infoFound) { "Incomplete backup: missing database or metadata" }
+                    "Backup structure verified: database and ${photoCount} photos. Restore is not yet enabled."
+                }
+            }.getOrElse { "Backup verification failed: ${it.message ?: "Unknown error"}" }
         }
     }
     private fun File.isSymbolicLinkSafe(): Boolean = runCatching {
