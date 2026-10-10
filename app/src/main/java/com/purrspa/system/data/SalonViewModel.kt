@@ -56,12 +56,12 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                 zip.closeEntry()
                             }
                             zip.putNextEntry(ZipEntry("backup-info.txt"))
-                            zip.write(("Purr Spa offline backup\\n" +
-                                "Format: 1\\n" +
-                                "Database schema: 12\\n" +
-                                "Created UTC: ${java.time.Instant.now()}\\n" +
-                                "Includes database and private visit photos.\\n" +
-                                "Confidential: contains client personal data.\\n").toByteArray(Charsets.UTF_8))
+                            zip.write(("Purr Spa offline backup\n" +
+                                "Format: 1\n" +
+                                "Database schema: 12\n" +
+                                "Created UTC: ${java.time.Instant.now()}\n" +
+                                "Includes database and private visit photos.\n" +
+                                "Confidential: contains client personal data.\n").toByteArray(Charsets.UTF_8))
                             zip.closeEntry()
                             addFile(databaseFile, "database/purrspa.db")
                             if (photos.isDirectory) photos.listFiles()?.filter { it.isFile && !it.isSymbolicLinkSafe() }?.forEach {
@@ -114,7 +114,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                 }
                                 when (entry.name) {
                                     "database/purrspa.db" -> {
-                                        require(entryBytes >= 100 && String(header, Charsets.US_ASCII) == "SQLite format 3\\u0000") { "Invalid SQLite database" }
+                                        require(entryBytes >= 100 && String(header, Charsets.US_ASCII) == "SQLite format 3\u0000") { "Invalid SQLite database" }
                                         databaseFound = true
                                     }
                                     "backup-info.txt" -> {
