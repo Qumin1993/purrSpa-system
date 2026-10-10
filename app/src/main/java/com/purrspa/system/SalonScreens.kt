@@ -858,6 +858,9 @@ private fun GroomingAssessmentDialog(
                     }
                 }
             }
+            OutlinedTextField(draft.aggressionNotes, { draft = draft.copy(aggressionNotes = it) }, label = { Text("Aggression / stress signals observed") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(draft.sensitiveAreas, { draft = draft.copy(sensitiveAreas = it) }, label = { Text("Sensitive areas (belly, paws, tail, etc.)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(draft.techniquesUsed, { draft = draft.copy(techniquesUsed = it) }, label = { Text("Techniques used / what worked") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(draft.coatCondition, { draft = draft.copy(coatCondition = it) }, label = { Text("Coat and skin observations") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(draft.recommendations, { draft = draft.copy(recommendations = it) }, label = { Text("Home care recommendations") }, modifier = Modifier.fillMaxWidth())
         }
