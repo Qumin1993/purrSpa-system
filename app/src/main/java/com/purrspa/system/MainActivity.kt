@@ -63,21 +63,19 @@ private fun PurrSpaApp() {
                             )
                         }
                         var expanded by remember { mutableStateOf(false) }
-                        Box {
-                            NavigationBarItem(
-                                selected = page !in primaryPages,
-                                onClick = { expanded = true },
-                                icon = { Text("⋯", color = Gold) },
-                                label = { Text("More", color = Color.White) },
-                                colors = NavigationBarItemDefaults.colors(indicatorColor = Rose)
-                            )
-                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                pages.filterNot { it in primaryPages }.forEach { name ->
-                                    DropdownMenuItem(text = { Text(name) }, onClick = {
-                                        page = name
-                                        expanded = false
-                                    })
-                                }
+                        NavigationBarItem(
+                            selected = page !in primaryPages,
+                            onClick = { expanded = true },
+                            icon = { Text("⋯", color = Gold) },
+                            label = { Text("More", color = Color.White) },
+                            colors = NavigationBarItemDefaults.colors(indicatorColor = Rose)
+                        )
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            pages.filterNot { it in primaryPages }.forEach { name ->
+                                DropdownMenuItem(text = { Text(name) }, onClick = {
+                                    page = name
+                                    expanded = false
+                                })
                             }
                         }
                     }
