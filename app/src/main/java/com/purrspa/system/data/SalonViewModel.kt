@@ -172,7 +172,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
             _backupMessage.value = runCatching {
                 withContext(Dispatchers.IO) {
                     val app = getApplication<Application>()
-                    val stage = File(app.cacheDir, "purrspa-restore-stage")
+                    val stage = File(app.filesDir, "purrspa-restore-stage")
                     if (stage.exists()) stage.deleteRecursively()
                     require(stage.mkdirs()) { "Cannot create restore staging area" }
                     try {
@@ -213,7 +213,20 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                             total += n
                                         }
                                     }
-                                    require(if (entry.name.startsWith("photos/")) size in 8..(15L * 1024 * 1024) else size > 0) { "Invalid entry size" }
+                                    require(when {
+                                        entry.name.startsWith("photos/") -> size in 8..(15L * 1024 * 1024)
+                                        entry.name == "backup-info.txt" -> size in 1..8192
+                                        else -> size >= 100
+                                    }) { "Invalid entry size" }
+                                    if (entry.name.startsWith("photos/")) {
+                                        val signature = ByteArray(12)
+                                        destination.inputStream().use { it.read(signature) }
+                                        val jpeg = (signature[0].toInt() and 255) == 255 && (signature[1].toInt() and 255) == 216
+                                        val png = signature.sliceArray(0..7).contentEquals(byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10))
+                                        val webp = String(signature, 0, 4, Charsets.US_ASCII) == "RIFF" &&
+                                            String(signature, 8, 4, Charsets.US_ASCII) == "WEBP"
+                                        require(jpeg || png || webp) { "Invalid photo format" }
+                                    }
                                     zip.closeEntry()
                                 }
                             }
@@ -230,9 +243,11 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                 require(c.moveToFirst() && c.getInt(0) == 12) { "Unsupported database schema" }
                             }
                             val photoNames = photosDir.listFiles()?.map { it.name }?.toSet() ?: emptySet()
+                            val referencedPhotos = mutableSetOf<String>()
                             stagedDb.rawQuery("SELECT privateFilename FROM visit_photos", null).use { c ->
-                                while (c.moveToNext()) require(c.getString(0) in photoNames) { "Backup missing a referenced photo" }
+                                while (c.moveToNext()) referencedPhotos.add(c.getString(0))
                             }
+                            require(referencedPhotos == photoNames) { "Backup photo records do not match archived photos" }
                         } finally { stagedDb.close() }
                         // Only stage for now: live DB must never be replaced while Room is open.
                         "Restore package validated and staged: ${photoCount} photos. Existing data unchanged; installation step not yet enabled."
