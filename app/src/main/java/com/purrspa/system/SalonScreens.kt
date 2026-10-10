@@ -35,6 +35,19 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
     val context = LocalContext.current
     val bookingError by vm.bookingError.collectAsStateWithLifecycle()
     val photoMessage by vm.photoMessage.collectAsStateWithLifecycle()
+    val backupMessage by vm.backupMessage.collectAsStateWithLifecycle()
+    LaunchedEffect(backupMessage) {
+        backupMessage?.let {
+            if (it != "Creating backup...") {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                vm.clearBackupMessage()
+            }
+        }
+    }
+    val backupPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> if (uri != null) vm.exportBackup(uri) }
+
     LaunchedEffect(photoMessage) {
         photoMessage?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show(); vm.clearPhotoMessage() }
     }
@@ -354,6 +367,15 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                         }
                     }
                 }
+            }
+            "Settings" -> {
+                Text("Data backup", style = MaterialTheme.typography.titleLarge)
+                Text("Save an offline copy of client records, grooming history, consent records and private visit photos.")
+                Text("Backups contain sensitive personal information. Keep the ZIP file in a secure location.", color = MaterialTheme.colorScheme.error)
+                Button(enabled = backupMessage != "Creating backup...", onClick = {
+                    backupPicker.launch("purr-spa-backup-${java.time.LocalDate.now()}.zip")
+                }) { Text(if (backupMessage == "Creating backup...") "Creating backup..." else "Export backup ZIP") }
+                Text("Restoring backups is not available yet. Keep the original device and app data until restore has been implemented and tested.", color = MaterialTheme.colorScheme.secondary)
             }
             "Notes" -> {
                 Text("Visit notes", style = MaterialTheme.typography.titleLarge)
