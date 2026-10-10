@@ -520,7 +520,16 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 ))
                 intakeCat = null
             }) { Text("Complete intake") } },
-            dismissButton = { TextButton(onClick = { intakeCat = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = {
+                if (changed) vm.saveOwnerIntake(OwnerIntake(
+                    id = saved?.id ?: cat.id, catId = cat.id,
+                    healthConditions = health.trim(), medications = meds.trim(), allergies = allergies.trim(),
+                    previousGrooming = previous.trim(), behaviourTriggers = triggers.trim(), handlingAdvice = advice.trim(),
+                    brushingTolerance = brushing, bathingTolerance = bathing, dryerTolerance = dryer, nailsTolerance = nails,
+                    isDraft = true
+                ))
+                intakeCat = null
+            }) { Text("Save draft & close") } }
         )
     }
     catConsent?.let { cat ->
@@ -853,7 +862,7 @@ private fun GroomingAssessmentDialog(
             OutlinedTextField(draft.recommendations, { draft = draft.copy(recommendations = it) }, label = { Text("Home care recommendations") }, modifier = Modifier.fillMaxWidth())
         }
     }, confirmButton = { TextButton(onClick = { onSave(draft) }) { Text("Save assessment") } },
-        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } })
+        dismissButton = { TextButton(onClick = { if (draft != original) onDraftChange(draft); onClose() }) { Text("Save & close") } })
 }
 
 @Composable
