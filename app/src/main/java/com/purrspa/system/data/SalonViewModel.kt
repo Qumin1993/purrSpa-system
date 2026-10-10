@@ -162,6 +162,88 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
             }.getOrElse { "Backup verification failed: ${it.message ?: "Unknown error"}" }
         }
     }
+    /**
+     * Stages a validated backup into private cache. Does not touch live records.
+     * A restart is required after installation so Room never uses an obsolete connection.
+     */
+    fun restoreBackup(uri: Uri) {
+        viewModelScope.launch {
+            _backupMessage.value = "Preparing restore..."
+            _backupMessage.value = runCatching {
+                withContext(Dispatchers.IO) {
+                    val app = getApplication<Application>()
+                    val stage = File(app.cacheDir, "purrspa-restore-stage")
+                    if (stage.exists()) stage.deleteRecursively()
+                    require(stage.mkdirs()) { "Cannot create restore staging area" }
+                    try {
+                        val dbFile = File(stage, "purrspa.db")
+                        val photosDir = File(stage, "photos")
+                        require(photosDir.mkdirs()) { "Cannot stage photos" }
+                        val names = mutableSetOf<String>()
+                        var total = 0L
+                        var photoCount = 0
+                        var hasDb = false
+                        var hasInfo = false
+                        val input = app.contentResolver.openInputStream(uri) ?: error("Cannot open backup")
+                        input.use { stream ->
+                            ZipInputStream(stream.buffered()).use { zip ->
+                                while (true) {
+                                    val entry = zip.nextEntry ?: break
+                                    require(!entry.isDirectory && names.add(entry.name)) { "Duplicate or invalid ZIP entry" }
+                                    val destination = when {
+                                        entry.name == "database/purrspa.db" -> dbFile.also { hasDb = true }
+                                        entry.name == "backup-info.txt" -> File(stage, "backup-info.txt").also { hasInfo = true }
+                                        entry.name.startsWith("photos/") &&
+                                            entry.name.substringAfter("photos/").matches(Regex("[a-zA-Z0-9._-]{1,150}")) -> {
+                                            photoCount++
+                                            File(photosDir, entry.name.substringAfter("photos/"))
+                                        }
+                                        else -> error("Unexpected backup entry")
+                                    }
+                                    var size = 0L
+                                    destination.outputStream().use { out ->
+                                        val buffer = ByteArray(8192)
+                                        while (true) {
+                                            val n = zip.read(buffer)
+                                            if (n < 0) break
+                                            require(n.toLong() <= 1024L * 1024 * 1024 - total) { "Backup exceeds 1 GB" }
+                                            require(n.toLong() <= 512L * 1024 * 1024 - size) { "File too large" }
+                                            out.write(buffer, 0, n)
+                                            size += n
+                                            total += n
+                                        }
+                                    }
+                                    require(if (entry.name.startsWith("photos/")) size in 8..(15L * 1024 * 1024) else size > 0) { "Invalid entry size" }
+                                    zip.closeEntry()
+                                }
+                            }
+                        }
+                        require(hasDb && hasInfo) { "Incomplete backup" }
+                        val metadata = File(stage, "backup-info.txt").readText()
+                        require(metadata.contains("Format: 1") && metadata.contains("Database schema: 12")) { "Unsupported backup format" }
+                        val stagedDb = SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+                        try {
+                            stagedDb.rawQuery("PRAGMA integrity_check", null).use { c ->
+                                require(c.moveToFirst() && c.getString(0) == "ok") { "Corrupted backup database" }
+                            }
+                            stagedDb.rawQuery("PRAGMA user_version", null).use { c ->
+                                require(c.moveToFirst() && c.getInt(0) == 12) { "Unsupported database schema" }
+                            }
+                            val photoNames = photosDir.listFiles()?.map { it.name }?.toSet() ?: emptySet()
+                            stagedDb.rawQuery("SELECT privateFilename FROM visit_photos", null).use { c ->
+                                while (c.moveToNext()) require(c.getString(0) in photoNames) { "Backup missing a referenced photo" }
+                            }
+                        } finally { stagedDb.close() }
+                        // Only stage for now: live DB must never be replaced while Room is open.
+                        "Restore package validated and staged: ${photoCount} photos. Existing data unchanged; installation step not yet enabled."
+                    } catch (e: Exception) {
+                        stage.deleteRecursively()
+                        throw e
+                    }
+                }
+            }.getOrElse { "Restore preparation failed: ${it.message ?: "Unknown error"}" }
+        }
+    }
     private fun File.isSymbolicLinkSafe(): Boolean = runCatching {
         canonicalFile != absoluteFile
     }.getOrDefault(true)
