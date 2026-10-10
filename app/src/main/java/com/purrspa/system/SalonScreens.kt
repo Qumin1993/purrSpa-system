@@ -699,6 +699,20 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                     Text("Service: ${visit.service}")
                     Text("Location: ${visit.location}")
                     Text("Status: ${visit.status.replace("_", " ")}")
+                    Text("Service price: £${"%.2f".format(Locale.UK, visit.pricePence / 100.0)}")
+                    if (visit.travelFeePence > 0L) Text("Travel fee: £${"%.2f".format(Locale.UK, visit.travelFeePence / 100.0)}")
+                    if (visit.depositPaidPence > 0L) Text("Deposit received: £${"%.2f".format(Locale.UK, visit.depositPaidPence / 100.0)}")
+                    HorizontalDivider()
+                    Text("Owner intake", style = MaterialTheme.typography.titleMedium)
+                    val intake = ownerIntakes.firstOrNull { it.catId == visit.catId }
+                    if (intake == null) Text("No owner intake recorded.")
+                    else {
+                        Text(if (intake.isDraft) "Intake draft (not completed)" else "Intake completed")
+                        if (intake.allergies.isNotBlank()) Text("Allergies: ${intake.allergies}")
+                        if (intake.healthConditions.isNotBlank()) Text("Health: ${intake.healthConditions}")
+                        if (intake.behaviourTriggers.isNotBlank()) Text("Known triggers: ${intake.behaviourTriggers}")
+                        if (intake.handlingAdvice.isNotBlank()) Text("Handling advice: ${intake.handlingAdvice}")
+                    }
                     HorizontalDivider()
                     Text("Groomer observations", style = MaterialTheme.typography.titleMedium)
                     if (assessment == null) {
