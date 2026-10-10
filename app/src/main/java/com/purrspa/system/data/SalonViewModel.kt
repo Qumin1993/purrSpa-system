@@ -54,6 +54,14 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                 file.inputStream().use { it.copyTo(zip) }
                                 zip.closeEntry()
                             }
+                            zip.putNextEntry(ZipEntry("backup-info.txt"))
+                            zip.write(("Purr Spa offline backup\\n" +
+                                "Format: 1\\n" +
+                                "Database schema: 12\\n" +
+                                "Created UTC: ${java.time.Instant.now()}\\n" +
+                                "Includes database and private visit photos.\\n" +
+                                "Confidential: contains client personal data.\\n").toByteArray(Charsets.UTF_8))
+                            zip.closeEntry()
                             addFile(databaseFile, "database/purrspa.db")
                             if (photos.isDirectory) photos.listFiles()?.filter { it.isFile && !it.isSymbolicLinkSafe() }?.forEach {
                                 addFile(it, "photos/${it.name}")
