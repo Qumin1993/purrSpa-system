@@ -44,6 +44,9 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
             }
         }
     }
+    val backupVerifier = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.verifyBackup(uri)
+    }
     val backupPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip")
     ) { uri -> if (uri != null) vm.exportBackup(uri) }
@@ -375,6 +378,7 @@ fun SalonScreen(page: String, vm: SalonViewModel) {
                 Button(enabled = backupMessage != "Creating backup...", onClick = {
                     backupPicker.launch("purr-spa-backup-${java.time.LocalDate.now()}.zip")
                 }) { Text(if (backupMessage == "Creating backup...") "Creating backup..." else "Export backup ZIP") }
+                OutlinedButton(enabled = backupMessage != "Checking backup...", onClick = { backupVerifier.launch(arrayOf("application/zip", "application/octet-stream")) }) { Text("Verify backup ZIP") }
                 Text("Restoring backups is not available yet. Keep the original device and app data until restore has been implemented and tested.", color = MaterialTheme.colorScheme.secondary)
             }
             "Notes" -> {
