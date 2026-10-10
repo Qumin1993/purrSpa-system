@@ -15,6 +15,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
@@ -26,6 +30,45 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val _photoMessage = MutableStateFlow<String?>(null)
     val photoMessage = _photoMessage.asStateFlow()
     fun clearPhotoMessage() { _photoMessage.value = null }
+    private val _backupMessage = MutableStateFlow<String?>(null)
+    val backupMessage = _backupMessage.asStateFlow()
+    fun clearBackupMessage() { _backupMessage.value = null }
+    fun exportBackup(uri: Uri) {
+        viewModelScope.launch {
+            _backupMessage.value = "Creating backup..."
+            _backupMessage.value = runCatching {
+                withContext(Dispatchers.IO) {
+                    // Force pending WAL transactions into the main database before copying.
+                    db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { cursor ->
+                        if (!cursor.moveToFirst() || cursor.getInt(0) != 0) error("Database is busy; retry backup.")
+                    }
+                    val app = getApplication<Application>()
+                    val databaseFile = app.getDatabasePath("purrspa.db")
+                    require(databaseFile.isFile) { "Database not found" }
+                    val photos = File(app.filesDir, "visit_photos")
+                    val output = app.contentResolver.openOutputStream(uri) ?: error("Cannot open backup destination")
+                    output.use { stream ->
+                        ZipOutputStream(stream.buffered()).use { zip ->
+                            fun addFile(file: File, name: String) {
+                                zip.putNextEntry(ZipEntry(name))
+                                file.inputStream().use { it.copyTo(zip) }
+                                zip.closeEntry()
+                            }
+                            addFile(databaseFile, "database/purrspa.db")
+                            if (photos.isDirectory) photos.listFiles()?.filter { it.isFile && !it.isSymbolicLinkSafe() }?.forEach {
+                                addFile(it, "photos/${it.name}")
+                            }
+                        }
+                    }
+                }
+                "Backup saved. Store this file securely: it contains personal client data."
+            }.getOrElse { "Backup failed: ${it.message ?: "Unknown error"}" }
+        }
+    }
+    private fun File.isSymbolicLinkSafe(): Boolean = runCatching {
+        canonicalFile != absoluteFile
+    }.getOrDefault(true)
+
     fun clearBookingError() { _bookingError.value = null }
     val clients = db.clients().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val cats = db.cats().observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
