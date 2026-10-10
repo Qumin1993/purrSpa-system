@@ -70,6 +70,9 @@ object VisitPdf {
                 val names = listOf("Not assessed", "Very calm", "Calm", "Okay", "Nervous", "Stressed")
                 lines += ratings.map { (label, score) -> "$label: ${names.getOrElse(score + 1) { "Not assessed" }}" }
                 lines += listOf("", "COAT / SKIN", assessment.coatCondition.ifBlank { "Not recorded" },
+                    "", "AGGRESSION / STRESS SIGNALS", assessment.aggressionNotes.ifBlank { "Not recorded" },
+                    "", "SENSITIVE AREAS", assessment.sensitiveAreas.ifBlank { "Not recorded" },
+                    "", "HANDLING TECHNIQUES", assessment.techniquesUsed.ifBlank { "Not recorded" },
                     "", "HOME CARE", assessment.recommendations.ifBlank { "Not recorded" })
             }
             val wrappedLines = lines.flatMap { PdfTextLayout.wrap(it, body, 500f) }
