@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import java.util.zip.ZipInputStream
+import android.database.sqlite.SQLiteDatabase
 
 class SalonViewModel(app: Application) : AndroidViewModel(app) {
     private val db = PurrDatabase.get(app)
@@ -81,6 +82,8 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                 withContext(Dispatchers.IO) {
                     val app = getApplication<Application>()
                     val input = app.contentResolver.openInputStream(uri) ?: error("Cannot read selected file")
+                    val extractedDb = File.createTempFile("purrspa-verify-", ".db", app.cacheDir)
+                    try {
                     var databaseFound = false
                     var infoFound = false
                     var photoCount = 0
@@ -98,11 +101,13 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                     "Unexpected ZIP entry"
                                 }
                                 var entryBytes = 0L
+                                val dbOutput = if (entry.name == "database/purrspa.db") extractedDb.outputStream() else null
                                 var header = ByteArray(16)
                                 var headerRead = 0
                                 while (true) {
                                     val read = zip.read(buffer)
                                     if (read < 0) break
+                                    dbOutput?.write(buffer, 0, read)
                                     entryBytes += read
                                     totalBytes += read
                                     require(totalBytes <= 1024L * 1024 * 1024) { "Archive exceeds 1 GB limit" }
@@ -112,6 +117,7 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                                         headerRead += take
                                     }
                                 }
+                                dbOutput?.close()
                                 when (entry.name) {
                                     "database/purrspa.db" -> {
                                         require(entryBytes >= 100 && String(header, Charsets.US_ASCII) == "SQLite format 3\u0000") { "Invalid SQLite database" }
@@ -128,7 +134,21 @@ class SalonViewModel(app: Application) : AndroidViewModel(app) {
                         }
                     }
                     require(databaseFound && infoFound) { "Incomplete backup: missing database or metadata" }
-                    "Backup structure verified: database and ${photoCount} photos. Restore is not yet enabled."
+                    val database = SQLiteDatabase.openDatabase(extractedDb.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+                    try {
+                        database.rawQuery("PRAGMA integrity_check", null).use { cursor ->
+                            require(cursor.moveToFirst() && cursor.getString(0) == "ok") { "SQLite integrity check failed" }
+                        }
+                        database.rawQuery("PRAGMA user_version", null).use { cursor ->
+                            require(cursor.moveToFirst() && cursor.getInt(0) == 12) { "Unsupported database schema" }
+                        }
+                    } finally {
+                        database.close()
+                    }
+                    "Backup verified: SQLite integrity OK, ${photoCount} photos. Restore is not yet enabled."
+                    } finally {
+                        extractedDb.delete()
+                    }
                 }
             }.getOrElse { "Backup verification failed: ${it.message ?: "Unknown error"}" }
         }
